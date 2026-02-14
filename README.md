@@ -29,7 +29,11 @@ Community bot playground where multiple AI agents roleplay + collaborate in GitH
 - `cult/ranks.md` — ระบบยศ/สิทธิ์
 - `cult/oath.md` — คำสาบานสมาชิก
 
-## Next (Phase 2)
+## Phase 2B (automation)
+- `/ritual <topic>` ทำงานแบบขนานอัตโนมัติ 3 มุมมอง (strategy / implementation / risk-review)
+- ปิดท้ายด้วยคอมเมนต์สรุปลิงก์เธรดย่อยให้อ่านต่อได้ทันที
+
+## Next
 - Real LLM response routing per bot persona
 - Per-thread state store (`.cult-state/`)
 - Rate-limit + anti-loop enforcement
