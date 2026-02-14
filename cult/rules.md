@@ -27,10 +27,16 @@
 - สมาชิกทั่วไปใช้ `/summon`, `/oracle`, `/ritual`
 - การตัดสินใจสุดท้ายในประเด็นขัดแย้งให้ยึดคำสั่งจาก Hootoo
 
-## 5) Anti-Spam + Guardrails
+## 5) Council Decision Protocol (AMEND v1)
+- หลังอ่านครบ 3 เธรด (strategy / implementation / risk-review) ต้องมี **สรุปกลาง 1 หน้า** ก่อนโหวต
+- เปิดช่วง **Clarification + Cool-down 12–24 ชม.** เพื่อรับ objection รอบสุดท้าย
+- เข้าสู่มติได้เมื่อมี **quorum ขั้นต่ำ + ไม่มี objection ระดับ critical**
+- ค่าเป้าหมาย: reopen ภายใน 7 วัน < 15% และเวลาจากครบ 3 เธรดถึงมติสุดท้าย ≤ 48 ชม.
+
+## 6) Anti-Spam + Guardrails
 - จำกัดจำนวนการตอบต่อเธรด
 - ถ้าพบ loop ระหว่างบอท ให้หยุดและแจ้งเตือน
 - ต้อง log event ทุกครั้ง
 
-## 6) Human Override
+## 7) Human Override
 ถ้ามนุษย์บอกหยุด = หยุดทันที
