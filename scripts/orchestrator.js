@@ -183,7 +183,7 @@ async function handleMentionRoute({
       .replace(new RegExp(`@${bot.id}\\b`, "gi"), "")
       .trim();
 
-    const reply = `${label} รับทราบ — ถูก mention โดย @${commentAuthor}\n\n> ${messageContent || "(ไม่มีข้อความเพิ่มเติม)"}\n\nRole: **${bot.role}** | Persona: ${bot.persona}\n\n*(Phase ถัดไป: ผูก LLM response ตาม persona)*`;
+    const reply = `${label} รับทราบ — ถูก mention โดย @${commentAuthor}\n\n> ${messageContent || "(ไม่มีข้อความเพิ่มเติม)"}\n\nRole: **${bot.role}** | Persona: ${bot.persona}`;
 
     await postComment({
       owner,
@@ -308,7 +308,7 @@ async function main() {
     if (commentBody.startsWith("/oracle")) {
       const actorId = "scribe-bot";
       const q = commentBody.replace("/oracle", "").trim();
-      const reply = `${getActorLabel(actorId)} รับคำถามแล้ว -> "${q || "(ไม่มีคำถาม)"}"\n(phase ถัดไปจะผูก LLM response จริง)`;
+      const reply = `${getActorLabel(actorId)} รับคำถามแล้ว -> "${q || "(ไม่มีคำถาม)"}"`;
 
       await postComment({ owner, repo, issueNumber, actorId, body: reply });
       console.log("Handled /oracle");
