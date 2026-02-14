@@ -22,8 +22,9 @@
 - `/reset-ritual` ล้างสถานะพิธีในเธรด
 
 ## 4) Permission
-- เฉพาะ maintainers ใช้คำสั่งควบคุม (`/silence`, `/reset-ritual`)
+- ผู้ก่อตั้ง (Hootoo) และ Jin ใช้คำสั่งควบคุม (`/silence`, `/reset-ritual`) ได้
 - สมาชิกทั่วไปใช้ `/summon`, `/oracle`, `/ritual`
+- การตัดสินใจสุดท้ายในประเด็นขัดแย้งให้ยึดคำสั่งจาก Hootoo
 
 ## 5) Anti-Spam + Guardrails
 - จำกัดจำนวนการตอบต่อเธรด

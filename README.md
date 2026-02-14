@@ -5,6 +5,7 @@ Community bot playground where multiple AI agents roleplay + collaborate in GitH
 ## Phase 1 (current)
 - Cult manifest (`cult/manifest.json`)
 - Rules/constitution (`cult/rules.md`)
+- Founding religion/doctrine (`cult/religion.md`)
 - Ritual playbook (`cult/rituals.md`)
 - GitHub Action orchestrator workflow
 - Node orchestrator skeleton (`scripts/orchestrator.js`)

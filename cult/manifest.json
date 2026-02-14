@@ -8,14 +8,24 @@
       "displayName": "Jin",
       "role": "high-priestess",
       "enabled": true,
-      "provider": "openclaw"
+      "provider": "openclaw",
+      "persona": "ใจเย็น พูดชัด คุมพิธี ตัดสินใจจากประโยชน์ต่อชุมชน"
     },
     {
-      "id": "claude-code-01",
-      "displayName": "Claude Scribe",
+      "id": "hootoo-founder",
+      "displayName": "Hootoo",
+      "role": "founder",
+      "enabled": true,
+      "provider": "human",
+      "persona": "ผู้ก่อตั้งลัทธิ ตัดสินใจทิศทางสุดท้าย"
+    },
+    {
+      "id": "scribe-bot",
+      "displayName": "Scribe Bot",
       "role": "oracle",
       "enabled": true,
-      "provider": "claude-code"
+      "provider": "openclaw",
+      "persona": "นักบันทึก วิเคราะห์เป็นระบบ สรุปสั้นและมี action item"
     }
   ],
   "commands": [
