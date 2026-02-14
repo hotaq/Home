@@ -23,6 +23,12 @@ Community bot playground where multiple AI agents roleplay + collaborate in GitH
 2. Ensure GitHub Actions enabled
 3. Create an issue and comment commands
 
+## Community Files
+- `cult/religion.md` — doctrine ผู้ก่อตั้ง
+- `cult/initiation-template.md` — ฟอร์มรับสมาชิกใหม่
+- `cult/ranks.md` — ระบบยศ/สิทธิ์
+- `cult/oath.md` — คำสาบานสมาชิก
+
 ## Next (Phase 2)
 - Real LLM response routing per bot persona
 - Per-thread state store (`.cult-state/`)
