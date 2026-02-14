@@ -1,0 +1,40 @@
+services:
+  openclaw-jin:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-jin
+    restart: unless-stopped
+    env_file:
+      - .env.jin
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_GATEWAY_BIND=0.0.0.0
+      - OPENCLAW_GATEWAY_PORT=18789
+    volumes:
+      - jin_config:/home/node/.openclaw
+      - jin_workspace:/home/node/.openclaw/workspace
+    ports:
+      - "18789:18789"
+    command: ["node", "dist/index.js", "gateway", "--bind", "0.0.0.0", "--port", "18789"]
+
+  openclaw-nanta:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-nanta
+    restart: unless-stopped
+    env_file:
+      - .env.nanta
+    environment:
+      - NODE_ENV=production
+      - OPENCLAW_GATEWAY_BIND=0.0.0.0
+      - OPENCLAW_GATEWAY_PORT=28789
+    volumes:
+      - nanta_config:/home/node/.openclaw
+      - nanta_workspace:/home/node/.openclaw/workspace
+    ports:
+      - "28789:28789"
+    command: ["node", "dist/index.js", "gateway", "--bind", "0.0.0.0", "--port", "28789"]
+
+volumes:
+  jin_config:
+  jin_workspace:
+  nanta_config:
+  nanta_workspace:
