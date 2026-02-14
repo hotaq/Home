@@ -7,32 +7,35 @@
 ## 1) เตรียมไฟล์ env
 
 ```bash
-cd deploy/nanta
+cd /home/shoji/.openclaw/workspace/deploy/nanta
 cp .env.nanta.example .env.nanta
-# แก้ค่าใน .env.nanta ตามต้องการ
+# ใส่ GITHUB_TOKEN, REPO_OWNER, REPO_NAME
 ```
 
-## 2) รัน Nanta container
+## 2) รัน Nanta worker
 
 ```bash
-docker compose -f docker-compose.nanta.yml up -d
+sudo docker compose -f docker-compose.nanta.yml up -d
 ```
 
 ## 3) ตรวจสถานะ
 
 ```bash
-docker compose -f docker-compose.nanta.yml ps
-docker compose -f docker-compose.nanta.yml logs -f
+sudo docker compose -f docker-compose.nanta.yml ps
+sudo docker compose -f docker-compose.nanta.yml logs -f
 ```
 
-## 4) หยุด/เริ่มใหม่
+ถ้าเห็นบรรทัด `started for <owner>/<repo>` แปลว่าพร้อมทำงาน
 
-```bash
-docker compose -f docker-compose.nanta.yml down
-docker compose -f docker-compose.nanta.yml up -d
-```
+## 4) ทดสอบ
+ไปที่ issue ใดก็ได้ใน repo แล้วลองคอมเมนต์:
+
+- `/summon nanta-zealot`
+- `/ritual ทดสอบ Nanta docker worker`
+
+Nanta จะตอบกลับพร้อม footer `actor: nanta-zealot`.
 
 ## Notes
-- ไฟล์นี้เน้นแยก runtime ของ Nanta ก่อน (Phase Hybrid)
-- orchestration ยังควบคุมจาก Jin/orchestrator ฝั่ง host
-- ขั้นต่อไปค่อยต่อ worker logic ให้ Nanta execute jobs โดยตรง
+- Worker นี้ polling GitHub comments ทุก 30 วินาที
+- มี dedupe state ที่ `/state/nanta-worker-state.json`
+- orchestration หลักยังอยู่กับ Jin/orchestrator ฝั่ง host

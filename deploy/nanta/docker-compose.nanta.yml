@@ -8,19 +8,11 @@ services:
       - .env.nanta
     environment:
       - TZ=UTC
+      - NANTA_STATE_PATH=/state/nanta-worker-state.json
     volumes:
       - ../../:/app
-      - nanta_state:/home/node/.openclaw
-    command: >
-      bash -lc "
-      apt-get update && apt-get install -y curl ca-certificates git &&
-      corepack enable &&
-      npm install -g @openclaw/openclaw || true &&
-      while true; do
-        echo '[Nanta worker] heartbeat: waiting for orchestrated tasks';
-        sleep 60;
-      done
-      "
+      - nanta_state:/state
+    command: ["node", "/app/deploy/nanta/worker.mjs"]
 
 volumes:
   nanta_state:
