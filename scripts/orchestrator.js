@@ -44,16 +44,17 @@ function withAuditFooter({ body, actorId, routerDecision }) {
 
 /**
  * Parse @mentions from comment body.
- * Returns array of matched bot objects from manifest, or empty array.
+ * Returns { matched: Bot[], unmatched: string[] }
  */
 function parseMentions(commentBody, manifest) {
   // Match @word patterns (case-insensitive)
   const mentionPattern = /@(\w[\w-]*)/gi;
   const matches = [...commentBody.matchAll(mentionPattern)];
 
-  if (matches.length === 0) return [];
+  if (matches.length === 0) return { matched: [], unmatched: [] };
 
-  const mentioned = [];
+  const matched = [];
+  const unmatched = [];
   for (const match of matches) {
     const name = match[1].toLowerCase();
     const bot = manifest.bots.find(
@@ -64,12 +65,14 @@ function parseMentions(commentBody, manifest) {
         b.id.toLowerCase().startsWith(name + "-") ||
         b.id.toLowerCase().startsWith(name)
     );
-    if (bot && !mentioned.find((m) => m.id === bot.id)) {
-      mentioned.push(bot);
+    if (bot && !matched.find((m) => m.id === bot.id)) {
+      matched.push(bot);
+    } else if (!bot && !unmatched.includes(name)) {
+      unmatched.push(name);
     }
   }
 
-  return mentioned;
+  return { matched, unmatched };
 }
 
 /**
@@ -128,11 +131,12 @@ async function handleMentionRoute({
     return true; // consumed, but no action
   }
 
-  const mentioned = parseMentions(commentBody, manifest);
+  const { matched, unmatched } = parseMentions(commentBody, manifest);
 
-  if (mentioned.length === 0) return false;
+  if (matched.length === 0 && unmatched.length === 0) return false;
 
-  for (const bot of mentioned) {
+  // Handle matched bots
+  for (const bot of matched) {
     // Check if bot is enabled
     if (!bot.enabled) {
       // Jin proxy
@@ -191,6 +195,29 @@ async function handleMentionRoute({
     });
 
     console.log(`Routed mention to ${bot.id}`);
+  }
+
+  // Handle unmatched mentions — Jin proxy
+  for (const name of unmatched) {
+    const canPost = await checkCooldown({
+      owner,
+      repo,
+      issueNumber,
+      actorId: "jin-core",
+      manifest,
+    });
+    if (canPost) {
+      const proxyBody = `🧊 [Jin] ⚠️ ไม่พบบอท **@${name}** ใน manifest\n\nJin รับแทน — กรุณาตรวจชื่อบอทหรือใช้ \`/summon\` เพื่อเรียกบอทที่มีอยู่`;
+      await postComment({
+        owner,
+        repo,
+        issueNumber,
+        actorId: "jin-core",
+        body: proxyBody,
+        routerDecision: `proxy for unknown @${name}`,
+      });
+      console.log(`Jin proxy for unknown mention: @${name}`);
+    }
   }
 
   return true;
