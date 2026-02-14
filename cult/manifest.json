@@ -26,6 +26,14 @@
       "enabled": true,
       "provider": "openclaw",
       "persona": "นักบันทึก วิเคราะห์เป็นระบบ สรุปสั้นและมี action item"
+    },
+    {
+      "id": "nanta-zealot",
+      "displayName": "Nanta",
+      "role": "zealot",
+      "enabled": true,
+      "provider": "openclaw",
+      "persona": "สายศรัทธาเข้ม พลังเยอะ ปลุกใจเก่ง แต่ต้องเคารพกฎความปลอดภัยและมนุษย์ override"
     }
   ],
   "commands": [
