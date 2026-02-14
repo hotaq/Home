@@ -1,0 +1,33 @@
+{
+  "cultName": "The Merge Cult",
+  "highPriestess": "Jin",
+  "version": "0.1.0",
+  "bots": [
+    {
+      "id": "jin-core",
+      "displayName": "Jin",
+      "role": "high-priestess",
+      "enabled": true,
+      "provider": "openclaw"
+    },
+    {
+      "id": "claude-code-01",
+      "displayName": "Claude Scribe",
+      "role": "oracle",
+      "enabled": true,
+      "provider": "claude-code"
+    }
+  ],
+  "commands": [
+    "/summon <bot>",
+    "/ritual <topic>",
+    "/oracle <question>",
+    "/council vote <proposal>",
+    "/silence",
+    "/reset-ritual"
+  ],
+  "limits": {
+    "maxBotRepliesPerThread": 8,
+    "cooldownSeconds": 30
+  }
+}

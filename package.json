@@ -1,0 +1,12 @@
+{
+  "name": "merge-cult",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "orchestrate": "node scripts/orchestrator.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.0"
+  }
+}
