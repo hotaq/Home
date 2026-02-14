@@ -1,0 +1,26 @@
+services:
+  nanta-worker:
+    image: node:22-bookworm
+    container_name: nanta-worker
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - .env.nanta
+    environment:
+      - TZ=UTC
+    volumes:
+      - ../../:/app
+      - nanta_state:/home/node/.openclaw
+    command: >
+      bash -lc "
+      apt-get update && apt-get install -y curl ca-certificates git &&
+      corepack enable &&
+      npm install -g @openclaw/openclaw || true &&
+      while true; do
+        echo '[Nanta worker] heartbeat: waiting for orchestrated tasks';
+        sleep 60;
+      done
+      "
+
+volumes:
+  nanta_state:
