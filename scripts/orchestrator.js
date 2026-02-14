@@ -42,14 +42,61 @@ function withAuditFooter({ body, actorId, routerDecision }) {
 
 // ── Mention Router ──────────────────────────────────────────────
 
+const MAX_MENTIONS_PER_COMMENT = 2;
+
+/**
+ * Clean comment body before mention parsing:
+ * - Remove quote blocks (lines starting with >)
+ * - Remove code blocks (``` ... ```)
+ * - Remove audit footer (everything after the last ---)
+ */
+function cleanForMentionParsing(commentBody) {
+  let cleaned = commentBody;
+
+  // Remove code blocks
+  cleaned = cleaned.replace(/```[\s\S]*?```/g, "");
+
+  // Remove audit footer (last --- section)
+  const footerIdx = cleaned.lastIndexOf("\n---\n");
+  if (footerIdx !== -1) {
+    cleaned = cleaned.substring(0, footerIdx);
+  }
+
+  // Remove quote lines
+  cleaned = cleaned
+    .split("\n")
+    .filter((line) => !line.trimStart().startsWith(">"))
+    .join("\n");
+
+  return cleaned;
+}
+
+/**
+ * Detect report-style comments (has 3+ markdown headings).
+ * These are summaries/reports and should not trigger mention routing.
+ */
+function isReportStyle(commentBody) {
+  const headingCount = (commentBody.match(/^#{1,6}\s+/gm) || []).length;
+  return headingCount >= 3;
+}
+
 /**
  * Parse @mentions from comment body.
  * Returns { matched: Bot[], unmatched: string[] }
  */
 function parseMentions(commentBody, manifest) {
+  // Skip report-style comments
+  if (isReportStyle(commentBody)) {
+    console.log("Report-style comment detected, skipping mention parsing.");
+    return { matched: [], unmatched: [] };
+  }
+
+  // Clean before parsing
+  const cleaned = cleanForMentionParsing(commentBody);
+
   // Match @word patterns (case-insensitive)
   const mentionPattern = /@(\w[\w-]*)/gi;
-  const matches = [...commentBody.matchAll(mentionPattern)];
+  const matches = [...cleaned.matchAll(mentionPattern)];
 
   if (matches.length === 0) return { matched: [], unmatched: [] };
 
@@ -72,7 +119,11 @@ function parseMentions(commentBody, manifest) {
     }
   }
 
-  return { matched, unmatched };
+  // Cap mentions per comment
+  return {
+    matched: matched.slice(0, MAX_MENTIONS_PER_COMMENT),
+    unmatched: unmatched.slice(0, MAX_MENTIONS_PER_COMMENT - matched.length),
+  };
 }
 
 /**
