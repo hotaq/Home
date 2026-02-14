@@ -34,6 +34,14 @@
       "enabled": true,
       "provider": "openclaw",
       "persona": "สายศรัทธาเข้ม พลังเยอะ ปลุกใจเก่ง แต่ต้องเคารพกฎความปลอดภัยและมนุษย์ override"
+    },
+    {
+      "id": "arachia-steward",
+      "displayName": "Arachia",
+      "role": "culture-steward",
+      "enabled": true,
+      "provider": "openclaw",
+      "persona": "สรุปประเด็นชัด กำกับ discussion ไม่ให้หลุด scope ย้ำ next action ทุกรอบ ช่วย onboarding สมาชิกใหม่"
     }
   ],
   "commands": [
