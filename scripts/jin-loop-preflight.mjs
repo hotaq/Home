@@ -9,6 +9,7 @@ function parseArgs(argv) {
     stateFile: ".state/jin-loop-last.json",
     cooldownMin: 8,
     candidates: [],
+    scopePrefixes: [],
     json: false,
   };
 
@@ -17,9 +18,10 @@ function parseArgs(argv) {
     if (a === "--state") out.stateFile = argv[++i];
     else if (a === "--cooldown-min") out.cooldownMin = Number(argv[++i]);
     else if (a === "--candidate") out.candidates.push(argv[++i]);
+    else if (a === "--scope-prefix") out.scopePrefixes.push(String(argv[++i] ?? "").trim());
     else if (a === "--json") out.json = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-preflight.mjs [options]\n\nOptions:\n  --state <path>         State file path (default: .state/jin-loop-last.json)\n  --cooldown-min <n>     Minimum minutes between runs (default: 8)\n  --candidate <file>     Candidate file to touch (repeatable)\n  --json                 Output machine-readable JSON\n`);
+      console.log(`Usage: node scripts/jin-loop-preflight.mjs [options]\n\nOptions:\n  --state <path>         State file path (default: .state/jin-loop-last.json)\n  --cooldown-min <n>     Minimum minutes between runs (default: 8)\n  --candidate <file>     Candidate file to touch (repeatable)\n  --scope-prefix <path>  Allowed path prefix for candidates (repeatable)\n  --json                 Output machine-readable JSON\n`);
       process.exit(0);
     }
   }
@@ -96,6 +98,22 @@ function run() {
     reasons.push("no candidate files provided; anti-repeat guardrail cannot verify this run");
   }
 
+  const scopePrefixes = opt.scopePrefixes
+    .map((x) => String(x || "").trim())
+    .filter(Boolean)
+    .map((x) => x.replace(/\\+$/g, "").replace(/\/$/, ""));
+  const outOfScope =
+    scopePrefixes.length === 0
+      ? []
+      : opt.candidates.filter(
+          (c) => !scopePrefixes.some((prefix) => c === prefix || c.startsWith(`${prefix}/`))
+        );
+  if (outOfScope.length > 0) {
+    reasons.push(
+      `candidate out of allowed scope: ${outOfScope.join(", ")} (allowed: ${scopePrefixes.join(", ")})`
+    );
+  }
+
   const repeated = opt.candidates.filter((c) =>
     Array.isArray(state.lastTouchedFiles) ? state.lastTouchedFiles.includes(c) : false
   );
@@ -123,6 +141,8 @@ function run() {
     nextHint: typeof state.nextHint === "string" ? state.nextHint : null,
     dirtyWorkspace: dirtyFiles.length > 0,
     dirtyFiles,
+    allowedScopePrefixes: scopePrefixes,
+    outOfScopeCandidates: outOfScope,
     warnings,
     reasons,
     nextAction: ok
@@ -149,6 +169,12 @@ function run() {
     }
     if (summary.dirtyWorkspace) {
       console.log(`- dirtyFiles: ${summary.dirtyFiles.join(", ")}`);
+    }
+    if (summary.allowedScopePrefixes.length > 0) {
+      console.log(`- allowedScopePrefixes: ${summary.allowedScopePrefixes.join(", ")}`);
+    }
+    if (summary.outOfScopeCandidates.length > 0) {
+      console.log(`- outOfScopeCandidates: ${summary.outOfScopeCandidates.join(", ")}`);
     }
     for (const w of warnings) console.log(`- warning: ${w}`);
     for (const r of reasons) console.log(`- reason: ${r}`);
