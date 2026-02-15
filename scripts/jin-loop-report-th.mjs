@@ -117,10 +117,13 @@ function pushStatusText(proof, commit, link) {
     return "ไม่มีลิงก์ (ยังไม่ commit)";
   }
 
+  const proofHead = proof?.head ? oneLine(proof.head) : "";
+
   if (proof.ok) {
     if (link) return `${oneLine(link)} (push ยืนยันแล้ว)`;
     if (commit) return `commit ${oneLine(commit)} (push ยืนยันแล้ว)`;
-    return "push ยืนยันแล้ว";
+    if (proofHead) return `commit ${proofHead} (push ยืนยันแล้ว)`;
+    return "ยังไม่ยืนยันหลักฐาน push แบบอ้างอิงได้";
   }
 
   const failed = Array.isArray(proof.checks)
@@ -129,6 +132,7 @@ function pushStatusText(proof, commit, link) {
   const reason = failed.length > 0 ? failed.join(",") : "push_unverified";
 
   if (commit) return `commit ${oneLine(commit)} (local เท่านั้น: ${reason})`;
+  if (proofHead) return `commit ${proofHead} (local เท่านั้น: ${reason})`;
   if (link) return `${oneLine(link)} (เตือน: push ยังไม่ยืนยัน ${reason})`;
   return `ยังไม่ยืนยัน push (${reason})`;
 }
