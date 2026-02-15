@@ -6,7 +6,8 @@
   "scripts": {
     "orchestrate": "node scripts/orchestrator.js",
     "test:router": "node scripts/test-mention-router.mjs",
-    "lint:thread": "node scripts/lint-thread-card.mjs"
+    "lint:thread": "node scripts/lint-thread-card.mjs",
+    "monitor:web": "node scripts/web-monitor.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0"

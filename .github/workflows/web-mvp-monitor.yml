@@ -1,0 +1,31 @@
+name: Web MVP Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run web monitor
+        env:
+          TARGET_URL: https://hotaq.github.io/Home/
+          REPO_OWNER: hotaq
+          REPO_NAME: Home
+          ISSUES: 1,3
+          MONITOR_OUT: web/monitor-latest.md
+        run: node scripts/web-monitor.mjs
+      - name: Upload monitor report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-monitor-report
+          path: web/monitor-latest.md
