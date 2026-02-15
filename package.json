@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "orchestrate": "node scripts/orchestrator.js",
-    "test:router": "node scripts/test-mention-router.mjs"
+    "test:router": "node scripts/test-mention-router.mjs",
+    "lint:thread": "node scripts/lint-thread-card.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0"
