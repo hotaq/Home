@@ -237,8 +237,10 @@ async function loadMonitorReport() {
   const reportEl = document.getElementById('monitor-report');
   const badgeEl = document.getElementById('monitor-badge');
 
+  if (!statusEl || !reportEl || !badgeEl) return;
+
   try {
-    const res = await fetch('./monitor-latest.md', { cache: 'no-store' });
+    const res = await fetch(`./monitor-latest.md?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`monitor-http-${res.status}`);
     const text = await res.text();
     reportEl.textContent = text.trim() || '(empty monitor report)';
@@ -287,49 +289,60 @@ async function loadMonitorReport() {
 
 async function load() {
   try {
-    const res = await fetch('./data.json');
+    const res = await fetch(`./data.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`data-http-${res.status}`);
     const data = await res.json();
 
-    document.getElementById('decision').innerHTML = `
-      <strong>${data.decision.title}</strong><br/>
-      Owner: ${data.decision.owner}<br/>
-      Due: ${data.decision.due}
-    `;
+    const decisionEl = document.getElementById('decision');
+    if (decisionEl) {
+      decisionEl.innerHTML = `
+        <strong>${data.decision.title}</strong><br/>
+        Owner: ${data.decision.owner}<br/>
+        Due: ${data.decision.due}
+      `;
+    }
 
     if (data.nextAction) {
-      document.getElementById('next-action').innerHTML = `
-        <strong>${data.nextAction.task}</strong><br/>
-        Owner: ${data.nextAction.owner}<br/>
-        Due: ${data.nextAction.due}<br/>
-        <a href="${data.nextAction.link}" target="_blank" rel="noopener">open thread</a>
-      `;
+      const nextActionEl = document.getElementById('next-action');
+      if (nextActionEl) {
+        nextActionEl.innerHTML = `
+          <strong>${data.nextAction.task}</strong><br/>
+          Owner: ${data.nextAction.owner}<br/>
+          Due: ${data.nextAction.due}<br/>
+          <a href="${data.nextAction.link}" target="_blank" rel="noopener">open thread</a>
+        `;
+      }
     }
 
     await loadThreads(data);
     renderQuickActions(data);
 
     const roster = document.getElementById('roster');
-    data.roster.forEach((r) => {
-      const li = document.createElement('li');
-      li.className = 'roster-item';
-      li.innerHTML = `
-        <span>${r.name} — ${r.role}</span>
-        <span class="badge ${statusClassFromText(r.status)}">${r.status}</span>
-      `;
-      roster.appendChild(li);
-    });
+    if (roster) {
+      data.roster.forEach((r) => {
+        const li = document.createElement('li');
+        li.className = 'roster-item';
+        li.innerHTML = `
+          <span>${r.name} — ${r.role}</span>
+          <span class="badge ${statusClassFromText(r.status)}">${r.status}</span>
+        `;
+        roster.appendChild(li);
+      });
+    }
 
     const health = document.getElementById('health');
-    data.health.forEach((h) => {
-      const li = document.createElement('li');
-      li.textContent = h;
-      health.appendChild(li);
-    });
+    if (health) {
+      data.health.forEach((h) => {
+        const li = document.createElement('li');
+        li.textContent = h;
+        health.appendChild(li);
+      });
+    }
 
     await loadMonitorReport();
   } catch (err) {
-    document.getElementById('threads-status').textContent = 'Cannot load dashboard data right now';
+    const statusEl = document.getElementById('threads-status');
+    if (statusEl) statusEl.textContent = 'Cannot load dashboard data right now';
     console.error('Dashboard load failed', err);
   }
 }
