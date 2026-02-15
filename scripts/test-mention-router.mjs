@@ -78,6 +78,17 @@ function ids(result) {
   return result.matched.map((b) => b.id);
 }
 
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function stripMention(body, bot) {
+  return body
+    .replace(new RegExp(`@${escapeRegExp(bot.displayName)}\\b`, "gi"), "")
+    .replace(new RegExp(`@${escapeRegExp(bot.id)}\\b`, "gi"), "")
+    .trim();
+}
+
 // 1) Normal command mention
 {
   const r = parseMentions("@nanta ช่วยดู risk ให้หน่อย", bots, "hotaq");
@@ -121,4 +132,12 @@ function ids(result) {
   assert.deepEqual(ids(r), []);
 }
 
-console.log("✅ mention router tests passed (6 cases)");
+// 7) Regex-safe mention stripping for special chars in displayName
+{
+  const weirdBot = { id: "jin-core", displayName: "Jin+Core" };
+  const body = "@Jin+Core กรุณาช่วยต่อด้วย @jin-core";
+  const stripped = stripMention(body, weirdBot);
+  assert.equal(stripped, "กรุณาช่วยต่อด้วย");
+}
+
+console.log("✅ mention router tests passed (7 cases)");

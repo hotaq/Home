@@ -28,6 +28,10 @@ function getActorLabel(botId) {
   return "🤖 [Cult Bot]";
 }
 
+function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function withAuditFooter({ body, actorId, routerDecision, dedupeKey }) {
   const runId = process.env.GITHUB_RUN_ID || "local";
   const source = process.env.GITHUB_ACTOR || "unknown";
@@ -257,8 +261,8 @@ async function handleMentionRoute({
     const label = getActorLabel(bot.id);
     // Strip the @mention itself to get the message content
     const messageContent = commentBody
-      .replace(new RegExp(`@${bot.displayName}\\b`, "gi"), "")
-      .replace(new RegExp(`@${bot.id}\\b`, "gi"), "")
+      .replace(new RegExp(`@${escapeRegExp(bot.displayName)}\\b`, "gi"), "")
+      .replace(new RegExp(`@${escapeRegExp(bot.id)}\\b`, "gi"), "")
       .trim();
 
     const reply = `${label} รับทราบ — ถูก mention โดย @${commentAuthor}\n\n> ${messageContent || "(ไม่มีข้อความเพิ่มเติม)"}\n\nRole: **${bot.role}** | Persona: ${bot.persona}`;
