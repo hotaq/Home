@@ -79,9 +79,17 @@ for (let i = 0; i < prefixes.length; i += 1) {
   lineBodies.push(body);
 }
 
-const uniqueBodies = new Set(lineBodies.map((x) => x.toLowerCase()));
+function normalizeBodyForDupCheck(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[\s\p{P}\p{S}_-]+/gu, "")
+    .trim();
+}
+
+const uniqueBodies = new Set(lineBodies.map((x) => normalizeBodyForDupCheck(x)));
 if (uniqueBodies.size < lineBodies.length) {
-  fail("เนื้อหาแต่ละบรรทัดห้ามซ้ำกัน เพื่อลดรายงานสแปมหรือ no-op", 14);
+  fail("เนื้อหาแต่ละบรรทัดห้ามซ้ำกัน (รวมกรณีเปลี่ยนแค่เว้นวรรค/เครื่องหมาย) เพื่อลดรายงานสแปมหรือ no-op", 14);
 }
 
 const tooLong = lines
