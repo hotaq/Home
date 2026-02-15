@@ -1,8 +1,9 @@
 {
-  "lastRunAt": "2026-02-15T12:16:48Z",
+  "lastRunAt": "2026-02-15T12:45:00Z",
   "lastTouchedFiles": [
-    "scripts/jin-loop-report-th.mjs"
+    "scripts/jin-loop-report-th.mjs",
+    ".state/jin-loop-last.json"
   ],
-  "lastCommit": "pending",
-  "nextHint": "wire report-th into cron wrapper so multiline inputs are normalized before sending"
+  "lastCommit": "",
+  "nextHint": "add a tiny test script to validate Thai 4-line report length and required prefixes"
 }

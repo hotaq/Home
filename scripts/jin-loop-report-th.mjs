@@ -10,6 +10,7 @@ function parseArgs(argv) {
     link: "",
     preflightJson: "",
     pushProofJson: "",
+    maxLineChars: 180,
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -21,8 +22,9 @@ function parseArgs(argv) {
     else if (a === "--link") out.link = argv[++i] ?? "";
     else if (a === "--preflight-json") out.preflightJson = argv[++i] ?? "";
     else if (a === "--push-proof-json") out.pushProofJson = argv[++i] ?? "";
+    else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--preflight-json <path>] [--push-proof-json <path>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
+      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--preflight-json <path>] [--push-proof-json <path>] [--max-line-chars <n>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
       process.exit(0);
     }
   }
@@ -49,6 +51,23 @@ function oneLine(text) {
     .replace(/\s*\n+\s*/g, " ")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+function ensureLineLength(lines, maxChars) {
+  if (!Number.isFinite(maxChars) || maxChars < 60) {
+    console.error("--max-line-chars ต้องเป็นตัวเลข >= 60");
+    process.exit(6);
+  }
+
+  const tooLong = lines
+    .map((line, index) => ({ index: index + 1, len: line.length }))
+    .filter((x) => x.len > maxChars);
+
+  if (tooLong.length > 0) {
+    const detail = tooLong.map((x) => `L${x.index}=${x.len}`).join(", ");
+    console.error(`รายงานยาวเกินกำหนด (${detail}) > ${maxChars} chars`);
+    process.exit(7);
+  }
 }
 
 const opt = parseArgs(process.argv);
@@ -104,4 +123,6 @@ const line2 = `ช่วยได้: ${oneLine(opt.why)}${dirtyNote}`;
 const line3 = `ถัดไป: ${oneLine(opt.next)}`;
 const line4 = `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
 
-console.log([line1, line2, line3, line4].join("\n"));
+const lines = [line1, line2, line3, line4];
+ensureLineLength(lines, opt.maxLineChars);
+console.log(lines.join("\n"));
