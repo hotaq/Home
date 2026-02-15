@@ -150,5 +150,6 @@ const line4 = isBlocked
   : `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
 
 const lines = [line1, line2, line3, line4];
-ensureLineLength(lines, opt.maxLineChars);
-console.log(lines.join("\n"));
+const numberedLines = lines.map((line, idx) => `${idx + 1}) ${line}`);
+ensureLineLength(numberedLines, opt.maxLineChars);
+console.log(numberedLines.join("\n"));
