@@ -260,7 +260,10 @@ function main() {
     canonicalIssue,
     "--require-numbered",
   ];
-  if (!isBlockerMode) validateArgs.push("--require-line1-path");
+  if (!isBlockerMode) {
+    validateArgs.push("--require-line1-path");
+    validateArgs.push("--require-measurable-line2");
+  }
   runNode("scripts/jin-loop-validate-th-report.mjs", validateArgs);
 
   if (opt.post) {

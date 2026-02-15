@@ -9,6 +9,7 @@ function parseArgs(argv) {
     requireBoard: "",
     requireLine1Path: false,
     requireNumbered: false,
+    requireMeasurableLine2: false,
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -19,8 +20,9 @@ function parseArgs(argv) {
     else if (a === "--require-board") out.requireBoard = String(argv[++i] ?? "").trim();
     else if (a === "--require-line1-path") out.requireLine1Path = true;
     else if (a === "--require-numbered") out.requireNumbered = true;
+    else if (a === "--require-measurable-line2") out.requireMeasurableLine2 = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>] [--require-line1-path] [--require-numbered]\n\nValidate Thai 4-line loop report format.`);
+      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>] [--require-line1-path] [--require-numbered] [--require-measurable-line2]\n\nValidate Thai 4-line loop report format.`);
       process.exit(0);
     }
   }
@@ -90,6 +92,16 @@ function normalizeBodyForDupCheck(text) {
 const uniqueBodies = new Set(lineBodies.map((x) => normalizeBodyForDupCheck(x)));
 if (uniqueBodies.size < lineBodies.length) {
   fail("เนื้อหาแต่ละบรรทัดห้ามซ้ำกัน (รวมกรณีเปลี่ยนแค่เว้นวรรค/เครื่องหมาย) เพื่อลดรายงานสแปมหรือ no-op", 14);
+}
+
+if (opt.requireMeasurableLine2) {
+  const line2 = lineBodies[1] || "";
+  const hasMetricToken =
+    /\d/.test(line2) ||
+    /%|เปอร์เซ็นต์|<=|>=|<|>|\bms\b|\bsec\b|ชั่วโมง|นาที|รอบ|ครั้ง|ตัวชี้วัด|kpi|sla/i.test(line2);
+  if (!hasMetricToken) {
+    fail("บรรทัด 'ช่วยได้:' ต้องมีตัวชี้วัดที่วัดผลได้ (เช่น ตัวเลข/%/เวลา/KPI)", 15);
+  }
 }
 
 const tooLong = lines
