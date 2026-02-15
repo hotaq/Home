@@ -251,6 +251,26 @@ async function loadMonitorReport() {
       badgeEl.className = 'badge badge-open';
     }
 
+    const incidentEl = document.getElementById('incident-lines');
+    incidentEl.innerHTML = '';
+    const lines = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    const incidentLines = lines.filter((l) => /fail|error|timeout/i.test(l));
+
+    if (incidentLines.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No incident lines in latest report';
+      incidentEl.appendChild(li);
+    } else {
+      incidentLines.slice(0, 8).forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        incidentEl.appendChild(li);
+      });
+    }
+
     statusEl.textContent = 'Monitor: loaded';
   } catch {
     statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
