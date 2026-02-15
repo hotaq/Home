@@ -47,6 +47,13 @@ When unrelated files are already modified:
 - Never bundle unrelated diffs into the same commit.
 - If push is blocked (auth/remote), report blocker explicitly instead of claiming pushed.
 
+## 6.3) Anti-repeat state stamp (for long loops)
+Before editing, read last stamp from `.state/jin-loop-last.json` (create if missing).
+- Required fields: `lastRunAt`, `lastTouchedFiles[]`, `lastCommit`, `nextHint`.
+- Rule: do not touch the same primary file in 2 consecutive runs unless fixing a verified bug.
+- After each run, update the stamp with the new file(s) + nextHint so the next cycle starts with context.
+- If no safe file is available, write a blocker note in the stamp instead of making a low-value diff.
+
 ## 7) Copy-paste run record (optional, 60s)
 Use this block in your notes so each sprint run proves QA + learning loop happened.
 
