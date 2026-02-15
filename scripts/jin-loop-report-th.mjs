@@ -9,6 +9,7 @@ function parseArgs(argv) {
     commit: "",
     link: "",
     preflightJson: "",
+    pushProofJson: "",
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -19,8 +20,9 @@ function parseArgs(argv) {
     else if (a === "--commit") out.commit = argv[++i] ?? "";
     else if (a === "--link") out.link = argv[++i] ?? "";
     else if (a === "--preflight-json") out.preflightJson = argv[++i] ?? "";
+    else if (a === "--push-proof-json") out.pushProofJson = argv[++i] ?? "";
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--preflight-json <path>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
+      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--preflight-json <path>] [--push-proof-json <path>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
       process.exit(0);
     }
   }
@@ -33,7 +35,7 @@ function parseArgs(argv) {
   return out;
 }
 
-function readPreflight(path) {
+function readJson(path) {
   if (!path) return null;
   try {
     return JSON.parse(fs.readFileSync(path, "utf8"));
@@ -50,11 +52,17 @@ function oneLine(text) {
 }
 
 const opt = parseArgs(process.argv);
-const preflight = readPreflight(opt.preflightJson);
+const preflight = readJson(opt.preflightJson);
+const pushProof = readJson(opt.pushProofJson);
 
 if (opt.preflightJson && !preflight) {
   console.error("โหลด preflight JSON ไม่ได้: หยุดรายงานเพื่อกันสถานะผิดพลาด");
   process.exit(3);
+}
+
+if (opt.pushProofJson && !pushProof) {
+  console.error("โหลด push-proof JSON ไม่ได้: หยุดรายงานเพื่อกันสถานะ push ผิดพลาด");
+  process.exit(5);
 }
 
 if (preflight && Array.isArray(preflight.reasons) && preflight.reasons.length > 0) {
@@ -68,10 +76,32 @@ const dirtyNote = preflight?.dirtyWorkspace
   ? " (กันพลาด: มีไฟล์ค้าง จึงแยก stage เฉพาะงานนี้)"
   : "";
 
+function pushStatusText(proof, commit, link) {
+  if (!proof) {
+    if (link) return oneLine(link);
+    if (commit) return `commit ${oneLine(commit)} (ยังไม่ตรวจ push)`;
+    return "ไม่มีลิงก์ (ยังไม่ commit)";
+  }
+
+  if (proof.ok) {
+    if (link) return `${oneLine(link)} (push ยืนยันแล้ว)`;
+    if (commit) return `commit ${oneLine(commit)} (push ยืนยันแล้ว)`;
+    return "push ยืนยันแล้ว";
+  }
+
+  const failed = Array.isArray(proof.checks)
+    ? proof.checks.filter((c) => !c.ok).map((c) => c.name)
+    : [];
+  const reason = failed.length > 0 ? failed.join(",") : "push_unverified";
+
+  if (commit) return `commit ${oneLine(commit)} (local เท่านั้น: ${reason})`;
+  if (link) return `${oneLine(link)} (เตือน: push ยังไม่ยืนยัน ${reason})`;
+  return `ยังไม่ยืนยัน push (${reason})`;
+}
+
 const line1 = `เปลี่ยน: ${oneLine(opt.changed)}`;
 const line2 = `ช่วยได้: ${oneLine(opt.why)}${dirtyNote}`;
 const line3 = `ถัดไป: ${oneLine(opt.next)}`;
-const proof = opt.link ? oneLine(opt.link) : opt.commit ? `commit ${oneLine(opt.commit)}` : "ไม่มีลิงก์ (ยังไม่ commit)";
-const line4 = `หลักฐาน: ${proof}`;
+const line4 = `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
 
 console.log([line1, line2, line3, line4].join("\n"));
