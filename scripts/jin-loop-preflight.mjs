@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { execSync } from "node:child_process";
 
 const args = process.argv.slice(2);
 
@@ -56,6 +57,19 @@ function minutesSince(iso) {
   return (Date.now() - t) / 60000;
 }
 
+function getDirtyFiles() {
+  try {
+    const out = execSync("git status --porcelain", { encoding: "utf8" }).trim();
+    if (!out) return [];
+    return out
+      .split("\n")
+      .map((line) => line.replace(/^..\s?/, "").trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function run() {
   const opt = parseArgs(args);
   const state = loadState(opt.stateFile);
@@ -63,8 +77,14 @@ function run() {
 
   const reasons = [];
   const warnings = [];
+  const dirtyFiles = getDirtyFiles();
 
   if (state._parseError) warnings.push("state file parse failed; using safe defaults");
+  if (dirtyFiles.length > 0) {
+    warnings.push(
+      `workspace already dirty (${dirtyFiles.length} file(s)); stage only target files for this run`
+    );
+  }
 
   if (mins < opt.cooldownMin) {
     reasons.push(
@@ -87,10 +107,14 @@ function run() {
     lastRunAt: state.lastRunAt ?? null,
     minutesSinceLastRun: Number.isFinite(mins) ? Number(mins.toFixed(2)) : null,
     lastTouchedFiles: Array.isArray(state.lastTouchedFiles) ? state.lastTouchedFiles : [],
+    dirtyWorkspace: dirtyFiles.length > 0,
+    dirtyFiles,
     warnings,
     reasons,
     nextAction: ok
-      ? "Proceed with one scoped improvement task."
+      ? dirtyFiles.length > 0
+        ? "Proceed, but stage only target file(s) to avoid bundling unrelated diffs."
+        : "Proceed with one scoped improvement task."
       : "Skip this run and retry after cooldown.",
   };
 
@@ -105,6 +129,9 @@ function run() {
     }
     if (summary.lastTouchedFiles.length) {
       console.log(`- lastTouchedFiles: ${summary.lastTouchedFiles.join(", ")}`);
+    }
+    if (summary.dirtyWorkspace) {
+      console.log(`- dirtyFiles: ${summary.dirtyFiles.join(", ")}`);
     }
     for (const w of warnings) console.log(`- warning: ${w}`);
     for (const r of reasons) console.log(`- reason: ${r}`);
