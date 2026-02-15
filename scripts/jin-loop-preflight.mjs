@@ -130,6 +130,23 @@ function run() {
     }
   }
 
+  const missingCandidates = opt.candidates.filter((c) => {
+    try {
+      return !fs.existsSync(c);
+    } catch {
+      return true;
+    }
+  });
+  if (missingCandidates.length > 0) {
+    warnings.push(`candidate file not found: ${missingCandidates.join(", ")}`);
+
+    // Reliability guardrail: if all candidates are missing,
+    // this run is very likely a typo/no-op and should be stopped.
+    if (opt.candidates.length > 0 && missingCandidates.length === opt.candidates.length) {
+      reasons.push("all candidate files are missing; fix candidate path before running");
+    }
+  }
+
   const ok = reasons.length === 0;
   const summary = {
     ok,
