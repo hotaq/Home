@@ -55,10 +55,12 @@ Before editing, read last stamp from `.state/jin-loop-last.json` (create if miss
 - If no safe file is available, write a blocker note in the stamp instead of making a low-value diff.
 
 ## 6.4) Push-proof guardrail (prevent false "pushed" claims)
-Before reporting a push, verify all three checks:
-- `git rev-parse --short HEAD` matches the commit you mention.
-- `git branch --show-current` is the expected branch.
-- `git log --oneline --decorate -1` shows `origin/<branch>` at the same commit.
+Before reporting a push, run:
+- `node scripts/jin-loop-push-proof.mjs --commit <sha> --branch <branch> --json`
+Required pass conditions:
+- HEAD SHA matches the commit you report.
+- Branch matches expected branch.
+- Upstream is configured and `ahead=0, behind=0` versus `@{u}`.
 If any check fails, report status as `committed locally` and include the exact blocker (auth, remote reject, network).
 
 ## 7) Copy-paste run record (optional, 60s)

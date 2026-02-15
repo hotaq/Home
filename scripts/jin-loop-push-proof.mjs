@@ -26,6 +26,14 @@ function git(cmd) {
   return execSync(`git ${cmd}`, { encoding: "utf8" }).trim();
 }
 
+function tryGit(cmd) {
+  try {
+    return { ok: true, value: git(cmd) };
+  } catch (error) {
+    return { ok: false, error: String(error?.message ?? error) };
+  }
+}
+
 function run() {
   const opt = parseArgs(process.argv.slice(2));
   const checks = [];
@@ -33,7 +41,7 @@ function run() {
   const head = git("rev-parse --short HEAD");
   const branch = git("branch --show-current");
   const logLine = git("log --oneline --decorate -1");
-  const tracksOrigin = logLine.includes(`origin/${branch}`);
+  const upstreamRef = tryGit("rev-parse --abbrev-ref --symbolic-full-name @{u}");
 
   checks.push({
     name: "head_commit",
@@ -50,17 +58,45 @@ function run() {
   });
 
   checks.push({
-    name: "origin_at_head",
-    ok: tracksOrigin,
-    value: logLine,
-    expected: `log includes origin/${branch}`,
+    name: "upstream_configured",
+    ok: upstreamRef.ok,
+    value: upstreamRef.ok ? upstreamRef.value : "(missing)",
+    expected: "upstream branch exists (e.g. origin/main)",
   });
+
+  let ahead = null;
+  let behind = null;
+
+  if (upstreamRef.ok) {
+    const div = tryGit("rev-list --left-right --count HEAD...@{u}");
+    if (div.ok) {
+      const [aheadCount, behindCount] = div.value.split(/\s+/).map((n) => Number.parseInt(n, 10));
+      ahead = Number.isFinite(aheadCount) ? aheadCount : null;
+      behind = Number.isFinite(behindCount) ? behindCount : null;
+      checks.push({
+        name: "upstream_in_sync",
+        ok: ahead === 0 && behind === 0,
+        value: { ahead, behind },
+        expected: { ahead: 0, behind: 0 },
+      });
+    } else {
+      checks.push({
+        name: "upstream_in_sync",
+        ok: false,
+        value: div.error,
+        expected: "able to compare HEAD with upstream",
+      });
+    }
+  }
 
   const ok = checks.every((c) => c.ok);
   const summary = {
     ok,
     head,
     branch,
+    upstream: upstreamRef.ok ? upstreamRef.value : null,
+    ahead,
+    behind,
     logLine,
     checks,
     status: ok ? "push_verified" : "commit_local_or_push_unverified",
