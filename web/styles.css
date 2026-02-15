@@ -12,6 +12,8 @@ li{margin:6px 0}
 .badge-closed{background:#5b2a2a;color:#ffdede}
 .badge-paused{background:#5f4b1e;color:#ffeec6}
 .badge-neutral{background:#334054;color:#e3e8f1}
+.badge-warn{background:#5b3f10;color:#ffd37a}
+.badge-critical{background:#5a1f1f;color:#ff9e9e}
 
 .roster-item{display:flex;justify-content:space-between;align-items:center;gap:8px}
 

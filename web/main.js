@@ -229,15 +229,33 @@ async function loadThreads(data) {
 async function loadMonitorReport() {
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
+  const badgeEl = document.getElementById('monitor-badge');
 
   try {
     const res = await fetch('./monitor-latest.md', { cache: 'no-store' });
     if (!res.ok) throw new Error(`monitor-http-${res.status}`);
     const text = await res.text();
     reportEl.textContent = text.trim() || '(empty monitor report)';
+
+    const normalized = text.toLowerCase();
+    const failCount = (normalized.match(/fail/g) || []).length;
+
+    if (failCount >= 2) {
+      badgeEl.textContent = 'critical';
+      badgeEl.className = 'badge badge-critical';
+    } else if (failCount === 1) {
+      badgeEl.textContent = 'warn';
+      badgeEl.className = 'badge badge-warn';
+    } else {
+      badgeEl.textContent = 'ok';
+      badgeEl.className = 'badge badge-open';
+    }
+
     statusEl.textContent = 'Monitor: loaded';
   } catch {
     statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
+    badgeEl.textContent = 'unknown';
+    badgeEl.className = 'badge badge-neutral';
   }
 }
 
