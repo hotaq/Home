@@ -86,10 +86,10 @@ Use this block in your notes so each sprint run proves QA + learning loop happen
 Use this exact format for fast status updates (must match validator prefixes):
 
 ```md
-เปลี่ยน: <เปลี่ยนอะไร> (<path>)
-ช่วยได้: <ช่วยอะไร/ลดปัญหาอะไรแบบวัดผลได้>
-ถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
-หลักฐาน: <commit SHA/ลิงก์/หรือ blocker ที่ชัดเจน>
+1) เปลี่ยน: <เปลี่ยนอะไร> (<path>)
+2) ช่วยได้: <ช่วยอะไร/ลดปัญหาอะไรแบบวัดผลได้> (ยึดบอร์ดหลัก #3)
+3) ถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
+4) หลักฐาน: <commit SHA/ลิงก์/หรือ blocker ที่ชัดเจน>
 ```
 
 ## 9) Report quality gate (before sending)
