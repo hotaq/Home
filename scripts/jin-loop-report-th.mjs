@@ -107,8 +107,12 @@ const dirtyNote = preflight?.dirtyWorkspace
   ? " (กันพลาด: มีไฟล์ค้าง จึงแยก stage เฉพาะงานนี้)"
   : "";
 
-const boardId = oneLine(opt.board || "3").replace(/^#*/, "");
-const boardNote = boardId ? ` (ยึดบอร์ดหลัก #${boardId})` : "";
+const boardId = oneLine(opt.board || "3").replace(/^#*/, "") || "3";
+if (boardId !== "3") {
+  console.error(`รองรับเฉพาะ canonical board #3 เท่านั้น (ได้รับ #${boardId})`);
+  process.exit(8);
+}
+const boardNote = ` (ยึดบอร์ดหลัก #${boardId})`;
 
 function pushStatusText(proof, commit, link) {
   if (!proof) {
