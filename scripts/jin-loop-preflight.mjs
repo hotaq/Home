@@ -97,6 +97,15 @@ function run() {
   );
   if (repeated.length > 0) {
     warnings.push(`candidate repeats last touched file(s): ${repeated.join(", ")}`);
+
+    // Hard guardrail for continuous loops:
+    // if every provided candidate repeats the immediate previous run,
+    // block this run to prevent no-op churn.
+    if (opt.candidates.length > 0 && repeated.length === opt.candidates.length) {
+      reasons.push(
+        "all candidates repeat last touched files; choose a different primary file for this run"
+      );
+    }
   }
 
   const ok = reasons.length === 0;
