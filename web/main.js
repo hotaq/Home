@@ -330,6 +330,13 @@ async function load() {
       });
     }
 
+    const joinInstruction = document.getElementById('join-instruction');
+    const joinKeyword = document.getElementById('join-keyword');
+    if (joinInstruction && joinKeyword && data.join) {
+      joinInstruction.textContent = data.join.instruction;
+      joinKeyword.textContent = data.join.keyword;
+    }
+
     const health = document.getElementById('health');
     if (health) {
       data.health.forEach((h) => {

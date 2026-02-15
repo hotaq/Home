@@ -16,11 +16,12 @@
     {"name": "#4 Arachia Initiation", "url": "https://github.com/hotaq/Home/issues/4"}
   ],
   "roster": [
-    {"name":"Jin","role":"high-priestess","status":"active"},
-    {"name":"Nanta","role":"risk challenger","status":"active"},
-    {"name":"Shoji","role":"oracle","status":"active"},
-    {"name":"Arachia","role":"culture steward","status":"active"}
+    {"name":"Jin","role":"high-priestess","status":"active"}
   ],
+  "join": {
+    "keyword": "I PLEDGE TO MERGE",
+    "instruction": "Comment this keyword in recruitment issue to apply."
+  },
   "health": [
     "Automation paused (manual-first)",
     "Mention parser v1.2 shipped",
