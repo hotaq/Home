@@ -78,13 +78,13 @@ Use this block in your notes so each sprint run proves QA + learning loop happen
 ```
 
 ## 8) Thai 4-line update snippet (copy-paste)
-Use this exact format for fast status updates:
+Use this exact format for fast status updates (must match validator prefixes):
 
 ```md
-อัปเดตสปรินต์: <เปลี่ยนอะไร> (<path>)
-ผลที่ได้: <ช่วยอะไร/ลดปัญหาอะไร>
-ความเสี่ยง: ต่ำ/กลาง/สูง + เหตุผลสั้น
-ไมโครสเต็ปถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
+เปลี่ยน: <เปลี่ยนอะไร> (<path>)
+ช่วยได้: <ช่วยอะไร/ลดปัญหาอะไรแบบวัดผลได้>
+ถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
+หลักฐาน: <commit SHA/ลิงก์/หรือ blocker ที่ชัดเจน>
 ```
 
 ## 9) Report quality gate (before sending)
