@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+import fs from "node:fs";
+
+function parseArgs(argv) {
+  const out = { file: "", text: "", maxLineChars: 180 };
+
+  for (let i = 2; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === "--file") out.file = argv[++i] ?? "";
+    else if (a === "--text") out.text = argv[++i] ?? "";
+    else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
+    else if (a === "-h" || a === "--help") {
+      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>]\n\nValidate Thai 4-line loop report format.`);
+      process.exit(0);
+    }
+  }
+
+  return out;
+}
+
+function fail(msg, code = 2) {
+  console.error(msg);
+  process.exit(code);
+}
+
+function readInput(opt) {
+  if (opt.file) {
+    try {
+      return fs.readFileSync(opt.file, "utf8");
+    } catch {
+      fail(`อ่านไฟล์ไม่ได้: ${opt.file}`, 3);
+    }
+  }
+
+  if (opt.text) return opt.text;
+
+  fail("ต้องระบุ --file หรือ --text", 2);
+}
+
+const opt = parseArgs(process.argv);
+if (!Number.isFinite(opt.maxLineChars) || opt.maxLineChars < 60) {
+  fail("--max-line-chars ต้องเป็นตัวเลข >= 60", 4);
+}
+
+const raw = readInput(opt)
+  .replace(/\r\n/g, "\n")
+  .trim();
+
+const lines = raw.split("\n").map((l) => l.trim());
+if (lines.length !== 4) fail(`ต้องมี 4 บรรทัดพอดี (เจอ ${lines.length})`, 5);
+
+const prefixes = ["เปลี่ยน:", "ช่วยได้:", "ถัดไป:", "หลักฐาน:"];
+for (let i = 0; i < prefixes.length; i += 1) {
+  if (!lines[i].startsWith(prefixes[i])) {
+    fail(`บรรทัด ${i + 1} ต้องขึ้นต้นด้วย '${prefixes[i]}'`, 6);
+  }
+}
+
+const tooLong = lines
+  .map((line, idx) => ({ line: idx + 1, len: line.length }))
+  .filter((x) => x.len > opt.maxLineChars);
+if (tooLong.length > 0) {
+  fail(
+    `เกินความยาวสูงสุด ${opt.maxLineChars} chars: ${tooLong
+      .map((x) => `L${x.line}=${x.len}`)
+      .join(", ")}`,
+    7
+  );
+}
+
+console.log(
+  JSON.stringify(
+    {
+      ok: true,
+      lines: lines.length,
+      maxLineChars: opt.maxLineChars,
+      prefixes,
+    },
+    null,
+    2
+  )
+);

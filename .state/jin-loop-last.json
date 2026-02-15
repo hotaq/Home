@@ -1,9 +1,11 @@
 {
-  "lastRunAt": "2026-02-15T12:45:00Z",
+  "lastRunAt": "2026-02-15T12:55:00Z",
   "lastTouchedFiles": [
-    "scripts/jin-loop-report-th.mjs",
+    "scripts/jin-loop-validate-th-report.mjs",
+    "package.json",
+    "docs/process/jin-sprint-micro-loop.md",
     ".state/jin-loop-last.json"
   ],
   "lastCommit": "",
-  "nextHint": "add a tiny test script to validate Thai 4-line report length and required prefixes"
+  "nextHint": "wire report validator into jin-loop-report-th generation flow so invalid reports fail fast"
 }

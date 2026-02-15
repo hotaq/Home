@@ -94,4 +94,8 @@ Quick-check these 4 points in <30 seconds:
 - Line 3 includes honest risk level + brief reason.
 - Line 4 names one concrete next step and, if committed, short SHA/link.
 
+Machine-check (recommended):
+- `node scripts/jin-loop-validate-th-report.mjs --file <report.txt>`
+- Pass criteria: exactly 4 lines, required prefixes (`เปลี่ยน:/ช่วยได้:/ถัดไป:/หลักฐาน:`), and max line length guard.
+
 If any point is missing, revise before posting the update.
