@@ -189,6 +189,13 @@ function renderThreadItem(threadsEl, thread, result) {
   threadsEl.appendChild(li);
 }
 
+function statusClassFromText(status = '') {
+  const normalized = status.toLowerCase();
+  if (normalized.includes('active')) return 'badge-open';
+  if (normalized.includes('paused') || normalized.includes('hold')) return 'badge-paused';
+  return 'badge-neutral';
+}
+
 async function loadThreads(data) {
   const threads = document.getElementById('threads');
   const statusEl = document.getElementById('threads-status');
@@ -226,7 +233,11 @@ async function load() {
     const roster = document.getElementById('roster');
     data.roster.forEach((r) => {
       const li = document.createElement('li');
-      li.textContent = `${r.name} — ${r.role} (${r.status})`;
+      li.className = 'roster-item';
+      li.innerHTML = `
+        <span>${r.name} — ${r.role}</span>
+        <span class="badge ${statusClassFromText(r.status)}">${r.status}</span>
+      `;
       roster.appendChild(li);
     });
 

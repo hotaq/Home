@@ -20,3 +20,7 @@ python3 -m http.server 8080
 - ดึงสถานะ issue จาก GitHub API แบบ real-time
 - ถ้า API ล่ม / timeout / rate-limit จะ fallback ไปใช้ cache ล่าสุดใน browser (ถ้ามี)
 - ถ้าไม่มี cache จะยังแสดงลิงก์ thread แบบ fallback เพื่อไม่ให้หน้าเว็บพัง
+
+## UX notes (mobile + status)
+- Agent roster แสดงเป็น badge สีตามสถานะ (active/paused/other) เพื่อสแกนเร็วขึ้น
+- บนจอเล็กจะเปลี่ยนเป็น single-column และเพิ่ม tap target ของ quick action ให้กดง่ายขึ้น
