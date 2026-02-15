@@ -79,6 +79,13 @@ if (opt.requireBoard) {
   }
 }
 
+const evidenceLine = lines[3].replace(/^\d+\)\s*/, "");
+const claimsPushVerified = /(push\s*ยืนยันแล้ว|pushed\s*verified|ขึ้น\s*remote\s*แล้ว)/i.test(evidenceLine);
+const hasTraceableProof = /(commit\s+[0-9a-f]{7,40}|https?:\/\/\S+)/i.test(evidenceLine);
+if (claimsPushVerified && !hasTraceableProof) {
+  fail("ห้ามอ้างว่า push ยืนยันแล้วถ้าไม่มี commit hash หรือ URL ในบรรทัดหลักฐาน", 9);
+}
+
 console.log(
   JSON.stringify(
     {
