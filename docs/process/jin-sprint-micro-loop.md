@@ -100,8 +100,8 @@ Quick-check these 4 points in <30 seconds:
 - Line 4 (`หลักฐาน:`) includes commit SHA/link, or explicit blocker when push is not verified.
 
 Machine-check (recommended):
-- `node scripts/jin-loop-validate-th-report.mjs --file <report.txt>`
-- Pass criteria: exactly 4 lines, required prefixes (`เปลี่ยน:/ช่วยได้:/ถัดไป:/หลักฐาน:`), and max line length guard.
+- `node scripts/jin-loop-validate-th-report.mjs --file <report.txt> --require-board 3 --require-line1-path --require-numbered`
+- Pass criteria: exactly 4 numbered lines, required prefixes (`เปลี่ยน:/ช่วยได้:/ถัดไป:/หลักฐาน:`), line 1 includes changed file path, references canonical board `#3`, and max line length guard.
 
 If any point is missing, revise before posting the update.
 
