@@ -44,6 +44,19 @@ function readPreflight(path) {
 
 const opt = parseArgs(process.argv);
 const preflight = readPreflight(opt.preflightJson);
+
+if (opt.preflightJson && !preflight) {
+  console.error("โหลด preflight JSON ไม่ได้: หยุดรายงานเพื่อกันสถานะผิดพลาด");
+  process.exit(3);
+}
+
+if (preflight && Array.isArray(preflight.reasons) && preflight.reasons.length > 0) {
+  console.error(
+    `preflight blocked (${preflight.reasons.join("; ")}): หยุดรายงานความคืบหน้าเพื่อกัน false-positive`
+  );
+  process.exit(4);
+}
+
 const dirtyNote = preflight?.dirtyWorkspace
   ? " (กันพลาด: มีไฟล์ค้าง จึงแยก stage เฉพาะงานนี้)"
   : "";
