@@ -38,6 +38,14 @@ If any near-miss/rework happened (including QA fail-then-fix), append one entry 
 - Deduplicate by checking `git diff --name-only` first; avoid repeating the same change in consecutive runs.
 - Stop condition: if scope is unclear or risk rises above docs/process changes, switch to "ask-human" note instead of forcing edits.
 - Commit policy: commit only when change is coherent and reversible in one message.
+- Evidence rule: every update must name touched file(s) + one measurable proof (`git diff --stat` or commit SHA).
+
+## 6.2) Dirty workspace commit rule (important)
+When unrelated files are already modified:
+- Stage only your target file(s): `git add -- <path1> <path2>`
+- Commit with scoped message: `docs(process): <micro-change>`
+- Never bundle unrelated diffs into the same commit.
+- If push is blocked (auth/remote), report blocker explicitly instead of claiming pushed.
 
 ## 7) Copy-paste run record (optional, 60s)
 Use this block in your notes so each sprint run proves QA + learning loop happened.
