@@ -6,6 +6,7 @@ function parseArgs(argv) {
     changed: "",
     why: "",
     next: "",
+    blocker: "",
     commit: "",
     link: "",
     board: "3",
@@ -19,6 +20,7 @@ function parseArgs(argv) {
     if (a === "--changed") out.changed = argv[++i] ?? "";
     else if (a === "--why") out.why = argv[++i] ?? "";
     else if (a === "--next") out.next = argv[++i] ?? "";
+    else if (a === "--blocker") out.blocker = argv[++i] ?? "";
     else if (a === "--commit") out.commit = argv[++i] ?? "";
     else if (a === "--link") out.link = argv[++i] ?? "";
     else if (a === "--preflight-json") out.preflightJson = argv[++i] ?? "";
@@ -26,13 +28,21 @@ function parseArgs(argv) {
     else if (a === "--board") out.board = argv[++i] ?? "3";
     else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--board <id>] [--preflight-json <path>] [--push-proof-json <path>] [--max-line-chars <n>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
+      console.log(`Usage: node scripts/jin-loop-report-th.mjs (--changed <text> --why <text> --next <text> | --blocker <text>) [--commit <sha>] [--link <url>] [--board <id>] [--preflight-json <path>] [--push-proof-json <path>] [--max-line-chars <n>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
       process.exit(0);
     }
   }
 
-  if (!out.changed || !out.why || !out.next) {
-    console.error("Missing required fields: --changed --why --next");
+  const hasNormal = Boolean(out.changed && out.why && out.next);
+  const hasBlocker = Boolean(out.blocker);
+
+  if (!hasNormal && !hasBlocker) {
+    console.error("Missing required fields: provide --changed --why --next OR --blocker");
+    process.exit(2);
+  }
+
+  if (hasNormal && hasBlocker) {
+    console.error("Use either normal mode or blocker mode, not both");
     process.exit(2);
   }
 
@@ -123,10 +133,21 @@ function pushStatusText(proof, commit, link) {
   return `ยังไม่ยืนยัน push (${reason})`;
 }
 
-const line1 = `เปลี่ยน: ${oneLine(opt.changed)}`;
-const line2 = `ช่วยได้: ${oneLine(opt.why)}${boardNote}${dirtyNote}`;
-const line3 = `ถัดไป: ${oneLine(opt.next)}`;
-const line4 = `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
+const blockerText = oneLine(opt.blocker);
+const isBlocked = Boolean(blockerText);
+
+const line1 = isBlocked
+  ? `เปลี่ยน: ติด blocker — ยังไม่ลงมือแก้งานเชิงโค้ด (${blockerText})`
+  : `เปลี่ยน: ${oneLine(opt.changed)}`;
+const line2 = isBlocked
+  ? `ช่วยได้: ลดความเสี่ยงรายงานหลอกว่าคืบหน้า ทั้งที่รอบนี้ติดบล็อก${boardNote}${dirtyNote}`
+  : `ช่วยได้: ${oneLine(opt.why)}${boardNote}${dirtyNote}`;
+const line3 = isBlocked
+  ? `ถัดไป: เคลียร์ blocker ก่อน — ${blockerText}`
+  : `ถัดไป: ${oneLine(opt.next)}`;
+const line4 = isBlocked
+  ? `หลักฐาน: blocker=${blockerText}; ${pushStatusText(pushProof, opt.commit, opt.link)}`
+  : `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
 
 const lines = [line1, line2, line3, line4];
 ensureLineLength(lines, opt.maxLineChars);
