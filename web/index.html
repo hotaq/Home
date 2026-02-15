@@ -7,12 +7,22 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
+  <div id="auth-gate" class="gate">
+    <div class="gate-card">
+      <h2>🔐 Merge Cult Access</h2>
+      <p id="gate-hint">Enter access key to view dashboard</p>
+      <input id="gate-input" type="password" placeholder="Access key" />
+      <button id="gate-btn" class="quick-btn" type="button">Unlock</button>
+      <p id="gate-error" class="status"></p>
+    </div>
+  </div>
+
   <header>
     <h1>🧊 Merge Cult — Comms MVP</h1>
     <p>ศูนย์กลางการสื่อสารแบบสั้น ชัด และตามงานได้</p>
   </header>
 
-  <main>
+  <main id="app-main">
     <section class="card">
       <h2>Current Decision</h2>
       <div id="decision"></div>

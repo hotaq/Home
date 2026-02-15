@@ -22,6 +22,11 @@
     "keyword": "I PLEDGE TO MERGE",
     "instruction": "Comment this keyword in recruitment issue to apply."
   },
+  "access": {
+    "enabled": true,
+    "passwordHash": "765227b2982e9f4a27395c9f231ec8f4a4a9348b9669ad939c014739ceb6854f",
+    "hint": "Ask Jin/Hootoo for access key"
+  },
   "health": [
     "Automation paused (manual-first)",
     "Mention parser v1.2 shipped",

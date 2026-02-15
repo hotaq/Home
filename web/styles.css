@@ -92,6 +92,11 @@ li{margin:7px 0}
 
 footer{border-top:1px solid var(--border);border-bottom:none}
 
+.gate{position:fixed;inset:0;background:rgba(5,9,18,.88);display:flex;align-items:center;justify-content:center;z-index:9999}
+.gate-card{width:min(420px,92vw);background:linear-gradient(180deg,var(--surface) 0%, var(--surface-2) 100%);border:1px solid var(--border);border-radius:14px;padding:16px}
+.gate-card h2{margin:0 0 8px}
+.gate-card input{width:100%;padding:10px;border-radius:10px;border:1px solid #30466f;background:#0f1a31;color:var(--text);margin:8px 0 10px}
+
 @media (max-width:720px){
   header,footer{padding:14px 16px}
   main{padding:10px;grid-template-columns:1fr}

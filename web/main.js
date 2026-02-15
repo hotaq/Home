@@ -287,11 +287,65 @@ async function loadMonitorReport() {
   }
 }
 
+async function sha256Hex(input) {
+  const enc = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
+  return [...new Uint8Array(hashBuffer)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function setupAccessGate(data) {
+  const gate = document.getElementById('auth-gate');
+  const main = document.getElementById('app-main');
+  const hint = document.getElementById('gate-hint');
+  const input = document.getElementById('gate-input');
+  const btn = document.getElementById('gate-btn');
+  const err = document.getElementById('gate-error');
+
+  if (!data.access?.enabled) {
+    gate.style.display = 'none';
+    return true;
+  }
+
+  if (data.access.hint && hint) hint.textContent = data.access.hint;
+
+  const unlocked = localStorage.getItem('cult-auth-ok') === data.access.passwordHash;
+  if (unlocked) {
+    gate.style.display = 'none';
+    return true;
+  }
+
+  main.style.filter = 'blur(2px)';
+
+  const attempt = async () => {
+    const value = (input?.value || '').trim();
+    if (!value) return;
+    const hex = await sha256Hex(value);
+    if (hex === data.access.passwordHash) {
+      localStorage.setItem('cult-auth-ok', hex);
+      gate.style.display = 'none';
+      main.style.filter = 'none';
+      location.reload();
+      return;
+    }
+    if (err) err.textContent = 'Invalid access key';
+  };
+
+  btn?.addEventListener('click', attempt);
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') attempt();
+  });
+
+  return false;
+}
+
 async function load() {
   try {
     const res = await fetch(`./data.json?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`data-http-${res.status}`);
     const data = await res.json();
+
+    const ok = await setupAccessGate(data);
+    if (!ok) return;
 
     const decisionEl = document.getElementById('decision');
     if (decisionEl) {
