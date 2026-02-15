@@ -82,9 +82,13 @@ function isReportStyle(commentBody) {
 
 /**
  * Parse @mentions from comment body.
+ * v1.2 guardrails:
+ * - Only parse the first non-empty actionable line
+ * - Actionable line must start with @mention
+ * - Ignore self/system handles to avoid proxy spam
  * Returns { matched: Bot[], unmatched: string[] }
  */
-function parseMentions(commentBody, manifest) {
+function parseMentions(commentBody, manifest, commentAuthor) {
   // Skip report-style comments
   if (isReportStyle(commentBody)) {
     console.log("Report-style comment detected, skipping mention parsing.");
@@ -93,17 +97,34 @@ function parseMentions(commentBody, manifest) {
 
   // Clean before parsing
   const cleaned = cleanForMentionParsing(commentBody);
+  const firstLine = cleaned
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.length > 0);
 
-  // Match @word patterns (case-insensitive)
-  const mentionPattern = /@(\w[\w-]*)/gi;
-  const matches = [...cleaned.matchAll(mentionPattern)];
+  if (!firstLine || !firstLine.startsWith("@")) {
+    return { matched: [], unmatched: [] };
+  }
 
+  // Match @word patterns from first line only
+  const mentionPattern = /@([a-z0-9][\w-]*)/gi;
+  const matches = [...firstLine.matchAll(mentionPattern)];
   if (matches.length === 0) return { matched: [], unmatched: [] };
+
+  const ignoredHandles = new Set([
+    String(commentAuthor || "").toLowerCase(),
+    "hotaq",
+    "github-actions",
+    "github-actions-bot",
+    "mention",
+  ]);
 
   const matched = [];
   const unmatched = [];
   for (const match of matches) {
     const name = match[1].toLowerCase();
+    if (ignoredHandles.has(name)) continue;
+
     const bot = manifest.bots.find(
       (b) =>
         b.id.toLowerCase() === name ||
@@ -112,6 +133,7 @@ function parseMentions(commentBody, manifest) {
         b.id.toLowerCase().startsWith(name + "-") ||
         b.id.toLowerCase().startsWith(name)
     );
+
     if (bot && !matched.find((m) => m.id === bot.id)) {
       matched.push(bot);
     } else if (!bot && !unmatched.includes(name)) {
@@ -182,7 +204,7 @@ async function handleMentionRoute({
     return true; // consumed, but no action
   }
 
-  const { matched, unmatched } = parseMentions(commentBody, manifest);
+  const { matched, unmatched } = parseMentions(commentBody, manifest, commentAuthor);
 
   if (matched.length === 0 && unmatched.length === 0) return false;
 
