@@ -2,15 +2,16 @@
 import fs from "node:fs";
 
 function parseArgs(argv) {
-  const out = { file: "", text: "", maxLineChars: 180 };
+  const out = { file: "", text: "", maxLineChars: 180, requireBoard: "" };
 
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === "--file") out.file = argv[++i] ?? "";
     else if (a === "--text") out.text = argv[++i] ?? "";
     else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
+    else if (a === "--require-board") out.requireBoard = String(argv[++i] ?? "").trim();
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>]\n\nValidate Thai 4-line loop report format.`);
+      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>]\n\nValidate Thai 4-line loop report format.`);
       process.exit(0);
     }
   }
@@ -68,6 +69,14 @@ if (tooLong.length > 0) {
       .join(", ")}`,
     7
   );
+}
+
+if (opt.requireBoard) {
+  const boardTag = `#${opt.requireBoard.replace(/^#/, "")}`;
+  const hasBoardRef = lines.some((line) => line.includes(boardTag));
+  if (!hasBoardRef) {
+    fail(`ต้องอ้างอิง canonical board ${boardTag} อย่างน้อย 1 บรรทัด`, 8);
+  }
 }
 
 console.log(
