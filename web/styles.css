@@ -6,3 +6,7 @@ a{color:#7cc7ff}
 pre{background:#0e1422;padding:10px;border-radius:8px;overflow:auto}
 li{margin:6px 0}
 .meta{color:#9aa7bd;font-size:.9em}
+.status{margin:0 0 8px;color:#9aa7bd;font-size:.92em}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75em;font-weight:700;margin-left:6px;vertical-align:middle}
+.badge-open{background:#1d693a;color:#d7ffe4}
+.badge-closed{background:#5b2a2a;color:#ffdede}
