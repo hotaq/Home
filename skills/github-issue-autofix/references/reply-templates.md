@@ -24,3 +24,9 @@ What changed:
 Verification:
 - <command>
 - <result>
+
+## 4) Blocked template
+สถานะ: blocked
+ติดที่: <one specific blocker>
+ต้องการจาก owner: <exact input/decision>
+เมื่อได้ข้อมูลแล้วจะทำต่อ: <next step + ETA>
