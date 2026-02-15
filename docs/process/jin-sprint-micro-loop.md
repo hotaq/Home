@@ -77,3 +77,12 @@ Use this exact format for fast status updates:
 ความเสี่ยง: ต่ำ/กลาง/สูง + เหตุผลสั้น
 ไมโครสเต็ปถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
 ```
+
+## 9) Report quality gate (before sending)
+Quick-check these 4 points in <30 seconds:
+- Line 1 contains exact changed file path.
+- Line 2 states one measurable outcome (fewer repeats, clearer owner, faster triage, etc.).
+- Line 3 includes honest risk level + brief reason.
+- Line 4 names one concrete next step and, if committed, short SHA/link.
+
+If any point is missing, revise before posting the update.
