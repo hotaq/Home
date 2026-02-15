@@ -1,32 +1,101 @@
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0f1115;color:#e8ecf1;margin:0;line-height:1.45}
-header,footer{padding:16px 20px;background:#151925}
-main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;padding:12px}
-.card{background:#1a2030;border:1px solid #2a344d;border-radius:10px;padding:12px}
-a{color:#7cc7ff}
-pre{background:#0e1422;padding:10px;border-radius:8px;overflow:auto}
-li{margin:6px 0}
-.meta{color:#9aa7bd;font-size:.9em}
-.meta-link{margin-left:8px;color:#9aa7bd;font-size:.88em}
-.status{margin:0 0 8px;color:#9aa7bd;font-size:.92em}
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75em;font-weight:700;margin-left:6px;vertical-align:middle}
-.badge-open{background:#1d693a;color:#d7ffe4}
-.badge-closed{background:#5b2a2a;color:#ffdede}
-.badge-paused{background:#5f4b1e;color:#ffeec6}
+:root{
+  --bg: #0b1020;
+  --surface: #111a2e;
+  --surface-2: #16223b;
+  --border: #2a3a5d;
+  --text: #eaf0fb;
+  --muted: #a8b5cc;
+  --accent: #7cc7ff;
+}
+
+*{box-sizing:border-box}
+body{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: radial-gradient(1200px 700px at 10% -10%, #1a2d55 0%, transparent 50%), var(--bg);
+  color: var(--text);
+  margin:0;
+  line-height:1.5;
+}
+header,footer{
+  padding:18px 22px;
+  background:linear-gradient(180deg, #151f36 0%, #111a2e 100%);
+  border-bottom:1px solid var(--border);
+}
+header h1{margin:0 0 6px;font-size:1.35rem;letter-spacing:.2px}
+header p{margin:0;color:var(--muted)}
+
+main{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:14px;
+  padding:14px;
+}
+.card{
+  background:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+.card h2{margin:0 0 10px;font-size:1.05rem}
+.card h3{margin:12px 0 6px;font-size:.95rem;color:var(--muted)}
+
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+pre{
+  background:#0b1428;
+  border:1px solid #223255;
+  padding:10px;
+  border-radius:10px;
+  overflow:auto;
+}
+li{margin:7px 0}
+.meta{color:var(--muted);font-size:.88em}
+.meta-link{margin-left:8px;color:var(--muted);font-size:.86em}
+.status{margin:0 0 8px;color:var(--muted);font-size:.9em}
+.badge{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:.72em;
+  font-weight:700;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.badge-open{background:#1e6f43;color:#d9ffe8}
+.badge-closed{background:#6b2a2a;color:#ffe1e1}
+.badge-paused{background:#6b561f;color:#fff0c2}
 .badge-neutral{background:#334054;color:#e3e8f1}
-.badge-warn{background:#5b3f10;color:#ffd37a}
-.badge-critical{background:#5a1f1f;color:#ff9e9e}
+.badge-warn{background:#6a4a0f;color:#ffd98a}
+.badge-critical{background:#6b1f1f;color:#ffaaaa}
 
 .roster-item{display:flex;justify-content:space-between;align-items:center;gap:8px}
 
 .quick-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.quick-btn{display:inline-block;padding:6px 10px;border-radius:8px;border:1px solid #2a344d;background:#0e1422;color:#e8ecf1;text-decoration:none;font-size:.9em;cursor:pointer;min-height:36px}
-.quick-btn:hover{border-color:#3f4e72;background:#111a2b}
-.quick-btn:focus-visible{outline:2px solid #7cc7ff;outline-offset:1px}
+.quick-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid #30466f;
+  background:#0f1a31;
+  color:var(--text);
+  text-decoration:none;
+  font-size:.9em;
+  cursor:pointer;
+  min-height:38px;
+  transition:all .18s ease;
+}
+.quick-btn:hover{border-color:#4d6ea8;background:#132447;transform:translateY(-1px)}
+.quick-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
-@media (max-width:640px){
+footer{border-top:1px solid var(--border);border-bottom:none}
+
+@media (max-width:720px){
   header,footer{padding:14px 16px}
   main{padding:10px;grid-template-columns:1fr}
-  .card{padding:10px}
+  .card{padding:12px}
   .quick-actions{display:grid;grid-template-columns:1fr 1fr}
   .quick-btn{text-align:center}
 }
