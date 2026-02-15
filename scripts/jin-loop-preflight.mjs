@@ -148,6 +148,18 @@ function run() {
   }
 
   const ok = reasons.length === 0;
+  const blockedByCooldownOnly =
+    !ok && reasons.length === 1 && reasons[0].startsWith("cooldown active:");
+
+  let nextAction = "Proceed with one scoped improvement task.";
+  if (ok && dirtyFiles.length > 0) {
+    nextAction = "Proceed, but stage only target file(s) to avoid bundling unrelated diffs.";
+  } else if (!ok && blockedByCooldownOnly) {
+    nextAction = "Skip this run and retry after cooldown.";
+  } else if (!ok) {
+    nextAction = "Fix the listed blocker(s) and rerun preflight.";
+  }
+
   const summary = {
     ok,
     stateFile: opt.stateFile,
@@ -162,11 +174,7 @@ function run() {
     outOfScopeCandidates: outOfScope,
     warnings,
     reasons,
-    nextAction: ok
-      ? dirtyFiles.length > 0
-        ? "Proceed, but stage only target file(s) to avoid bundling unrelated diffs."
-        : "Proceed with one scoped improvement task."
-      : "Skip this run and retry after cooldown.",
+    nextAction,
   };
 
   if (opt.json) {
