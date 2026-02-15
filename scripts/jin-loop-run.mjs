@@ -115,6 +115,36 @@ function writeMaybeJson(pathname, text, fallbackObj) {
   fs.writeFileSync(pathname, JSON.stringify(fallbackObj, null, 2) + "\n");
 }
 
+function updateLoopState(stateFile, files, commit, nextHint) {
+  ensureDirFor(stateFile);
+
+  let prev = {
+    lastRunAt: null,
+    lastTouchedFiles: [],
+    lastCommit: null,
+    nextHint: null,
+  };
+
+  if (fs.existsSync(stateFile)) {
+    try {
+      prev = { ...prev, ...JSON.parse(fs.readFileSync(stateFile, "utf8")) };
+    } catch {
+      // Keep safe defaults when state file is corrupted.
+    }
+  }
+
+  const touched = Array.from(new Set((files || []).map((x) => String(x || "").trim()).filter(Boolean)));
+  const nextState = {
+    ...prev,
+    lastRunAt: new Date().toISOString(),
+    lastTouchedFiles: touched,
+    lastCommit: commit || null,
+    nextHint: nextHint || null,
+  };
+
+  fs.writeFileSync(stateFile, JSON.stringify(nextState, null, 2) + "\n");
+}
+
 function main() {
   const opt = parseArgs(process.argv.slice(2));
   const canonicalIssue = "3";
@@ -218,6 +248,7 @@ function main() {
     runShell(`gh issue comment ${opt.issue} --repo ${opt.repo} --body-file ${opt.reportFile}`);
   }
 
+  updateLoopState(opt.stateFile, opt.candidates, headShort, opt.next);
   console.log(reportText);
 }
 
