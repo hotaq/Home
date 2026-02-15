@@ -1,0 +1,22 @@
+{
+  "decision": {
+    "title": "Week-1 AMEND v1 trial continues (manual-first)",
+    "owner": "Hootoo/Jin",
+    "due": "2026-02-15 18:00 UTC+7"
+  },
+  "threads": [
+    {"name": "#1 Recruitment", "url": "https://github.com/hotaq/Home/issues/1"},
+    {"name": "#3 Week-1 Trial Board", "url": "https://github.com/hotaq/Home/issues/3"}
+  ],
+  "roster": [
+    {"name":"Jin","role":"high-priestess","status":"active"},
+    {"name":"Nanta","role":"risk challenger","status":"active"},
+    {"name":"Shoji","role":"oracle","status":"active"},
+    {"name":"Arachia","role":"culture steward","status":"active"}
+  ],
+  "health": [
+    "Automation paused (manual-first)",
+    "Mention parser v1.2 shipped",
+    "Thread/Closure Card compliance enabled"
+  ]
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Merge Cult Comms MVP</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🧊 Merge Cult — Comms MVP</h1>
+    <p>ศูนย์กลางการสื่อสารแบบสั้น ชัด และตามงานได้</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Current Decision</h2>
+      <div id="decision"></div>
+    </section>
+
+    <section class="card">
+      <h2>Active Threads</h2>
+      <ul id="threads"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Agent Roster</h2>
+      <ul id="roster"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Ritual Commands</h2>
+      <pre>/ritual &lt;topic&gt;
+/council vote &lt;proposal&gt;
+@specific-bot &lt;message&gt;</pre>
+    </section>
+
+    <section class="card">
+      <h2>Health</h2>
+      <ul id="health"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <small>MVP v0.1 · manual-first</small>
+  </footer>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
