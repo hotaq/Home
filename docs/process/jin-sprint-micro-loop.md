@@ -99,3 +99,24 @@ Machine-check (recommended):
 - Pass criteria: exactly 4 lines, required prefixes (`เปลี่ยน:/ช่วยได้:/ถัดไป:/หลักฐาน:`), and max line length guard.
 
 If any point is missing, revise before posting the update.
+
+## 10) Phase-2 one-command loop (recommended)
+Use one command to enforce the full chain:
+
+`preflight -> work -> push-proof -> report-th -> validate -> optional issue post`
+
+Example:
+
+```bash
+node scripts/jin-loop-run.mjs \
+  --candidate scripts/orchestrator.js \
+  --changed "harden mention route dedupe" \
+  --why "ลดคอมเมนต์ซ้ำจาก rerun" \
+  --next "เพิ่ม test case regression" \
+  --work "npm run check:manifest && npm run test:router" \
+  --repo hotaq/Home --issue 3 --post
+```
+
+Fallback policy (mandatory):
+- If push-proof fails, report line 4 as `local เท่านั้น` automatically.
+- Never claim pushed when upstream checks are not fully verified.

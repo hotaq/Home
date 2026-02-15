@@ -11,7 +11,8 @@
     "check:manifest": "node scripts/check-manifest.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
-    "check:report-th": "node scripts/jin-loop-validate-th-report.mjs"
+    "check:report-th": "node scripts/jin-loop-validate-th-report.mjs",
+    "loop:run": "node scripts/jin-loop-run.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0"

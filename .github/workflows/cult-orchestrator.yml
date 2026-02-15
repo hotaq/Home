@@ -24,11 +24,22 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Guardrail check - manifest
+        run: npm run check:manifest
+
+      - name: Guardrail check - mention router tests
+        run: npm run test:router
+
+      - name: Guardrail check - Thai 4-line report validator (smoke)
+        run: |
+          node scripts/jin-loop-validate-th-report.mjs --text $'เปลี่ยน: smoke\nช่วยได้: smoke\nถัดไป: smoke\nหลักฐาน: smoke'
+
       - name: Run orchestrator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
           COMMENT_BODY: ${{ github.event.comment.body }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
         run: node scripts/orchestrator.js
