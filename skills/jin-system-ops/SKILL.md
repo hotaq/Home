@@ -39,6 +39,15 @@ Run this skill when the goal is reliability-first operations.
 - For stabilization checklist: `references/stability-checklist.md`
 - For automation rollout: `references/automation-rollout.md`
 - For MCP website CLI roadmap: `references/mcp-website-cli.md`
+- For reply quality gate: `references/response-qa.md`
+- For post-task learning loop: `references/self-review-template.md`
+- For anti-repeat incident tracking: `references/failure-log.md`
+
+## Mandatory self-improvement loop
+After each significant task:
+1) Run Response QA checklist before final reply.
+2) Write a 3-line self-review.
+3) If failure/near-miss happened, append an entry to failure-log.
 
 ## Output format
 Always return:
