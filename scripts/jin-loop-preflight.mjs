@@ -92,6 +92,10 @@ function run() {
     );
   }
 
+  if (opt.candidates.length === 0) {
+    reasons.push("no candidate files provided; anti-repeat guardrail cannot verify this run");
+  }
+
   const repeated = opt.candidates.filter((c) =>
     Array.isArray(state.lastTouchedFiles) ? state.lastTouchedFiles.includes(c) : false
   );
