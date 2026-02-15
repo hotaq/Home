@@ -1,0 +1,57 @@
+# Jin Sprint Micro-Loop (10-minute run)
+
+Purpose: ship one safe improvement in docs/skills/process files with low risk.
+
+## 0) Scope gate (30s)
+- Only touch: `docs/**`, `skills/**`, `*process*` files.
+- No system config, infra, or external actions.
+
+## 1) Pick one micro-change (2m)
+- Clarify wording that caused confusion, **or**
+- Add a checklist/template that reduces repeat mistakes, **or**
+- Add a tiny guardrail note near a risky step.
+
+## 2) Response QA gate (2m)
+Use `skills/jin-system-ops/references/response-qa.md` and pass all 5 sections.
+- If any section fails once, revise immediately and mark it as a near-miss for step 4.
+
+## 3) 3-line self-review (2m)
+Append to your run notes using:
+- `skills/jin-system-ops/references/self-review-template.md`
+- Include optional tags (`type`, `severity`, `repeat-risk`) to make trend review faster.
+
+## 4) Failure logging rule (2m)
+If any near-miss/rework happened (including QA fail-then-fix), append one entry to:
+- `skills/jin-system-ops/references/failure-log.md`
+
+## 5) Close with next micro-step (1m)
+- Define one follow-up that fits in <=10 minutes.
+- Keep it concrete and single-owner.
+
+## 6) Progress update format (30s)
+- Send max 4 lines: `What changed` + `Why it helps` + `Next micro-step`.
+- Include touched file path to make verification easy.
+
+## 7) Copy-paste run record (optional, 60s)
+Use this block in your notes so each sprint run proves QA + learning loop happened.
+
+```md
+### Sprint run record
+- Changed: <file path + one-line change>
+- QA: PASS (clarity/actionability/correctness/scope/safety)
+- Self-review:
+  1) What worked: <one line>
+  2) Friction: <one line>
+  3) Next change: <one line>
+- Failure log: none | added entry (<path>)
+```
+
+## 8) Thai 4-line update snippet (copy-paste)
+Use this exact format for fast status updates:
+
+```md
+อัปเดตสปรินต์: <เปลี่ยนอะไร> (<path>)
+ผลที่ได้: <ช่วยอะไร/ลดปัญหาอะไร>
+ความเสี่ยง: ต่ำ/กลาง/สูง + เหตุผลสั้น
+ไมโครสเต็ปถัดไป: <งานเดียวที่ทำต่อใน 10 นาที>
+```
