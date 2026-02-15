@@ -42,6 +42,13 @@ function readPreflight(path) {
   }
 }
 
+function oneLine(text) {
+  return String(text || "")
+    .replace(/\s*\n+\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 const opt = parseArgs(process.argv);
 const preflight = readPreflight(opt.preflightJson);
 
@@ -61,10 +68,10 @@ const dirtyNote = preflight?.dirtyWorkspace
   ? " (กันพลาด: มีไฟล์ค้าง จึงแยก stage เฉพาะงานนี้)"
   : "";
 
-const line1 = `เปลี่ยน: ${opt.changed}`;
-const line2 = `ช่วยได้: ${opt.why}${dirtyNote}`;
-const line3 = `ถัดไป: ${opt.next}`;
-const proof = opt.link ? opt.link : opt.commit ? `commit ${opt.commit}` : "ไม่มีลิงก์ (ยังไม่ commit)";
+const line1 = `เปลี่ยน: ${oneLine(opt.changed)}`;
+const line2 = `ช่วยได้: ${oneLine(opt.why)}${dirtyNote}`;
+const line3 = `ถัดไป: ${oneLine(opt.next)}`;
+const proof = opt.link ? oneLine(opt.link) : opt.commit ? `commit ${oneLine(opt.commit)}` : "ไม่มีลิงก์ (ยังไม่ commit)";
 const line4 = `หลักฐาน: ${proof}`;
 
 console.log([line1, line2, line3, line4].join("\n"));

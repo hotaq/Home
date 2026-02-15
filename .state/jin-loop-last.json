@@ -1,8 +1,8 @@
 {
-  "lastRunAt": "2026-02-15T11:35:00Z",
+  "lastRunAt": "2026-02-15T12:16:48Z",
   "lastTouchedFiles": [
     "scripts/jin-loop-report-th.mjs"
   ],
-  "lastCommit": null,
-  "nextHint": "integrate jin-loop-report-th.mjs into orchestrator flow so Thai status is auto-generated from run metadata"
+  "lastCommit": "pending",
+  "nextHint": "wire report-th into cron wrapper so multiline inputs are normalized before sending"
 }
