@@ -40,6 +40,11 @@ If any near-miss/rework happened (including QA fail-then-fix), append one entry 
 - Commit policy: commit only when change is coherent and reversible in one message.
 - Evidence rule: every update must name touched file(s) + one measurable proof (`git diff --stat` or commit SHA).
 
+## 6.1.1) Canonical board lock (#3)
+- Governance/protocol loop updates must anchor to issue **#3** as the single canonical board.
+- In status reports, reference `#3` explicitly; do not imply a new canonical thread.
+- If a task requests another board, treat it as a blocker and ask Hootoo before switching.
+
 ## 6.2) Dirty workspace commit rule (important)
 When unrelated files are already modified:
 - Stage only your target file(s): `git add -- <path1> <path2>`
