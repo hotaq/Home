@@ -7,7 +7,7 @@ const args = process.argv.slice(2);
 function parseArgs(argv) {
   const out = {
     stateFile: ".state/jin-loop-last.json",
-    cooldownMin: 30,
+    cooldownMin: 8,
     candidates: [],
     json: false,
   };
@@ -19,7 +19,7 @@ function parseArgs(argv) {
     else if (a === "--candidate") out.candidates.push(argv[++i]);
     else if (a === "--json") out.json = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-preflight.mjs [options]\n\nOptions:\n  --state <path>         State file path (default: .state/jin-loop-last.json)\n  --cooldown-min <n>     Minimum minutes between runs (default: 30)\n  --candidate <file>     Candidate file to touch (repeatable)\n  --json                 Output machine-readable JSON\n`);
+      console.log(`Usage: node scripts/jin-loop-preflight.mjs [options]\n\nOptions:\n  --state <path>         State file path (default: .state/jin-loop-last.json)\n  --cooldown-min <n>     Minimum minutes between runs (default: 8)\n  --candidate <file>     Candidate file to touch (repeatable)\n  --json                 Output machine-readable JSON\n`);
       process.exit(0);
     }
   }
@@ -116,6 +116,7 @@ function run() {
     lastRunAt: state.lastRunAt ?? null,
     minutesSinceLastRun: Number.isFinite(mins) ? Number(mins.toFixed(2)) : null,
     lastTouchedFiles: Array.isArray(state.lastTouchedFiles) ? state.lastTouchedFiles : [],
+    nextHint: typeof state.nextHint === "string" ? state.nextHint : null,
     dirtyWorkspace: dirtyFiles.length > 0,
     dirtyFiles,
     warnings,
@@ -138,6 +139,9 @@ function run() {
     }
     if (summary.lastTouchedFiles.length) {
       console.log(`- lastTouchedFiles: ${summary.lastTouchedFiles.join(", ")}`);
+    }
+    if (summary.nextHint) {
+      console.log(`- nextHint: ${summary.nextHint}`);
     }
     if (summary.dirtyWorkspace) {
       console.log(`- dirtyFiles: ${summary.dirtyFiles.join(", ")}`);
