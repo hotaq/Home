@@ -210,20 +210,26 @@ function statusClassFromText(status = '') {
 async function loadThreads(data) {
   const threads = document.getElementById('threads');
   const statusEl = document.getElementById('threads-status');
+  const openBadge = document.getElementById('open-threads-badge');
 
   const results = await Promise.all(data.threads.map((thread) => fetchIssueMeta(thread)));
 
   let liveCount = 0;
   let cacheCount = 0;
+  let openCount = 0;
 
   results.forEach((result, index) => {
     if (result.ok && result.source === 'live') liveCount += 1;
     if (result.ok && result.source === 'cache') cacheCount += 1;
+    if (result.ok && result.issue?.state === 'open') openCount += 1;
     renderThreadItem(threads, data.threads[index], result);
   });
 
   const fallbackCount = data.threads.length - liveCount - cacheCount;
   statusEl.textContent = `Live ${liveCount}/${data.threads.length} · cache ${cacheCount} · fallback ${fallbackCount}`;
+
+  openBadge.textContent = `open: ${openCount}/${data.threads.length}`;
+  openBadge.className = openCount > 0 ? 'badge badge-open' : 'badge badge-closed';
 }
 
 async function loadMonitorReport() {
