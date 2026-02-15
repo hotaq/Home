@@ -4,6 +4,12 @@
     "owner": "Hootoo/Jin",
     "due": "2026-02-15 18:00 UTC+7"
   },
+  "nextAction": {
+    "task": "Monitor web reliability and collect incident lines",
+    "owner": "Jin",
+    "due": "2026-02-15 18:30 UTC+7",
+    "link": "https://github.com/hotaq/Home/issues/3"
+  },
   "threads": [
     {"name": "#1 Recruitment", "url": "https://github.com/hotaq/Home/issues/1"},
     {"name": "#3 Week-1 Trial Board", "url": "https://github.com/hotaq/Home/issues/3"}

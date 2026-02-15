@@ -291,6 +291,15 @@ async function load() {
       Due: ${data.decision.due}
     `;
 
+    if (data.nextAction) {
+      document.getElementById('next-action').innerHTML = `
+        <strong>${data.nextAction.task}</strong><br/>
+        Owner: ${data.nextAction.owner}<br/>
+        Due: ${data.nextAction.due}<br/>
+        <a href="${data.nextAction.link}" target="_blank" rel="noopener">open thread</a>
+      `;
+    }
+
     await loadThreads(data);
     renderQuickActions(data);
 
