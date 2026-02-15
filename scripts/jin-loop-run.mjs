@@ -12,6 +12,7 @@ function parseArgs(argv) {
     changed: "",
     why: "",
     next: "",
+    blocker: "",
     commit: "",
     branch: "",
     link: "",
@@ -34,6 +35,7 @@ function parseArgs(argv) {
     else if (a === "--changed") out.changed = argv[++i] ?? "";
     else if (a === "--why") out.why = argv[++i] ?? "";
     else if (a === "--next") out.next = argv[++i] ?? "";
+    else if (a === "--blocker") out.blocker = argv[++i] ?? "";
     else if (a === "--commit") out.commit = argv[++i] ?? "";
     else if (a === "--branch") out.branch = argv[++i] ?? "";
     else if (a === "--link") out.link = argv[++i] ?? "";
@@ -46,13 +48,21 @@ function parseArgs(argv) {
     else if (a === "--post") out.post = true;
     else if (a === "--allow-unverified-post") out.allowUnverifiedPost = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-run.mjs [options]\n\nPhase-2 one-command loop:\n  preflight -> work -> push-proof -> report-th -> validator -> optional issue post\n\nRequired:\n  --changed <text>\n  --why <text>\n  --next <text>\n\nOptions:\n  --candidate <file>      Candidate file for anti-repeat preflight (repeatable)\n  --work <cmd>            Shell command for the work step\n  --state <path>          State file (default: .state/jin-loop-last.json)\n  --cooldown-min <n>      Preflight cooldown (default: 8)\n  --commit <sha>          Expected commit (default: current HEAD)\n  --branch <name>         Expected branch (default: current branch)\n  --link <url>            Evidence link (default: infer from origin + HEAD)\n  --preflight-json <path> Save preflight JSON (default: .state/jin-loop-preflight.json)\n  --push-proof-json <path> Save push-proof JSON (default: .state/jin-loop-push-proof.json)\n  --report-file <path>    Save Thai report output (default: .state/jin-loop-report-th.txt)\n  --max-line-chars <n>    Max chars per report line (default: 180)\n  --repo <owner/repo>     Repo for gh issue comment\n  --issue <number>        Issue number for gh issue comment (must be canonical #3 when --post)\n  --post                  Post report to issue when --repo/--issue are provided\n  --allow-unverified-post Allow posting even when push-proof fails (default: block post)\n`);
+      console.log(`Usage: node scripts/jin-loop-run.mjs [options]\n\nPhase-2 one-command loop:\n  preflight -> work -> push-proof -> report-th -> validator -> optional issue post\n\nRequired (choose one mode):\n  normal:  --changed <text> --why <text> --next <text>\n  blocker: --blocker <text>\n\nOptions:\n  --candidate <file>      Candidate file for anti-repeat preflight (repeatable)\n  --work <cmd>            Shell command for the work step\n  --blocker <text>        Blocker mode (emit 4-line blocker report without claiming progress)\n  --state <path>          State file (default: .state/jin-loop-last.json)\n  --cooldown-min <n>      Preflight cooldown (default: 8)\n  --commit <sha>          Expected commit (default: current HEAD)\n  --branch <name>         Expected branch (default: current branch)\n  --link <url>            Evidence link (default: infer from origin + HEAD)\n  --preflight-json <path> Save preflight JSON (default: .state/jin-loop-preflight.json)\n  --push-proof-json <path> Save push-proof JSON (default: .state/jin-loop-push-proof.json)\n  --report-file <path>    Save Thai report output (default: .state/jin-loop-report-th.txt)\n  --max-line-chars <n>    Max chars per report line (default: 180)\n  --repo <owner/repo>     Repo for gh issue comment\n  --issue <number>        Issue number for gh issue comment (must be canonical #3 when --post)\n  --post                  Post report to issue when --repo/--issue are provided\n  --allow-unverified-post Allow posting even when push-proof fails (default: block post)\n`);
       process.exit(0);
     }
   }
 
-  if (!out.changed || !out.why || !out.next) {
-    console.error("Missing required fields: --changed --why --next");
+  const hasNormal = Boolean(out.changed && out.why && out.next);
+  const hasBlocker = Boolean(out.blocker);
+
+  if (!hasNormal && !hasBlocker) {
+    console.error("Missing required fields: use normal mode (--changed --why --next) or blocker mode (--blocker)");
+    process.exit(2);
+  }
+
+  if (hasNormal && hasBlocker) {
+    console.error("Use either normal mode or blocker mode, not both");
     process.exit(2);
   }
 
@@ -153,6 +163,8 @@ function main() {
   ensureDirFor(opt.pushProofJson);
   ensureDirFor(opt.reportFile);
 
+  const isBlockerMode = Boolean(opt.blocker);
+
   const preflightArgs = [
     "--state",
     opt.stateFile,
@@ -171,47 +183,67 @@ function main() {
     reasons: ["preflight script produced no JSON output"],
   });
 
-  if (preflight.status !== 0) {
+  if (preflight.status !== 0 && !isBlockerMode) {
     const msg = preflight.stderr?.trim() || "preflight blocked";
     console.error(`Preflight blocked: ${msg}`);
     process.exit(preflight.status || 1);
   }
 
-  if (opt.work) runShell(opt.work);
+  if (opt.work && !isBlockerMode) runShell(opt.work);
 
   const headShort = opt.commit || git("rev-parse --short HEAD");
   const headFull = git("rev-parse HEAD");
   const branch = opt.branch || git("branch --show-current") || "main";
   const link = opt.link || inferCommitLink(headFull);
 
-  const pushProofArgs = ["--commit", headShort, "--branch", branch, "--json"];
-  const pushProof = runNode("scripts/jin-loop-push-proof.mjs", pushProofArgs, {
-    allowFailure: true,
-  });
-  const pushProofVerified = pushProof.status === 0;
+  let pushProofVerified = false;
+  if (!isBlockerMode) {
+    const pushProofArgs = ["--commit", headShort, "--branch", branch, "--json"];
+    const pushProof = runNode("scripts/jin-loop-push-proof.mjs", pushProofArgs, {
+      allowFailure: true,
+    });
+    pushProofVerified = pushProof.status === 0;
 
-  writeMaybeJson(opt.pushProofJson, pushProof.stdout, {
-    ok: false,
-    status: "push-proof-unavailable",
-    checks: [],
-  });
+    writeMaybeJson(opt.pushProofJson, pushProof.stdout, {
+      ok: false,
+      status: "push-proof-unavailable",
+      checks: [],
+    });
+  } else {
+    writeMaybeJson(opt.pushProofJson, "", {
+      ok: false,
+      status: "blocker-mode-no-push-proof",
+      checks: [],
+    });
+  }
 
-  const reportArgs = [
-    "--changed",
-    opt.changed,
-    "--why",
-    opt.why,
-    "--next",
-    opt.next,
-    "--commit",
-    headShort,
-    "--preflight-json",
-    opt.preflightJson,
-    "--push-proof-json",
-    opt.pushProofJson,
-    "--max-line-chars",
-    String(opt.maxLineChars),
-  ];
+  const reportArgs = isBlockerMode
+    ? [
+        "--blocker",
+        opt.blocker,
+        "--preflight-json",
+        opt.preflightJson,
+        "--push-proof-json",
+        opt.pushProofJson,
+        "--max-line-chars",
+        String(opt.maxLineChars),
+      ]
+    : [
+        "--changed",
+        opt.changed,
+        "--why",
+        opt.why,
+        "--next",
+        opt.next,
+        "--commit",
+        headShort,
+        "--preflight-json",
+        opt.preflightJson,
+        "--push-proof-json",
+        opt.pushProofJson,
+        "--max-line-chars",
+        String(opt.maxLineChars),
+      ];
 
   if (link) reportArgs.push("--link", link);
 
@@ -219,16 +251,17 @@ function main() {
   const reportText = (report.stdout || "").trim();
   fs.writeFileSync(opt.reportFile, reportText + "\n");
 
-  runNode("scripts/jin-loop-validate-th-report.mjs", [
+  const validateArgs = [
     "--file",
     opt.reportFile,
     "--max-line-chars",
     String(opt.maxLineChars),
     "--require-board",
     canonicalIssue,
-    "--require-line1-path",
     "--require-numbered",
-  ]);
+  ];
+  if (!isBlockerMode) validateArgs.push("--require-line1-path");
+  runNode("scripts/jin-loop-validate-th-report.mjs", validateArgs);
 
   if (opt.post) {
     if (!opt.repo || !opt.issue) {
