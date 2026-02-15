@@ -31,6 +31,13 @@ If any near-miss/rework happened (including QA fail-then-fix), append one entry 
 ## 6) Progress update format (30s)
 - Send max 4 lines: `What changed` + `Why it helps` + `Next micro-step`.
 - Include touched file path to make verification easy.
+- If a commit exists, include short SHA or link in line 4.
+
+## 6.1) Continuous loop guardrails (for scheduled automation)
+- Never return idle: each run must produce one concrete file diff, or an explicit blocker with evidence.
+- Deduplicate by checking `git diff --name-only` first; avoid repeating the same change in consecutive runs.
+- Stop condition: if scope is unclear or risk rises above docs/process changes, switch to "ask-human" note instead of forcing edits.
+- Commit policy: commit only when change is coherent and reversible in one message.
 
 ## 7) Copy-paste run record (optional, 60s)
 Use this block in your notes so each sprint run proves QA + learning loop happened.
