@@ -44,7 +44,7 @@ function parseArgs(argv) {
     else if (a === "--issue") out.issue = argv[++i] ?? "";
     else if (a === "--post") out.post = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-run.mjs [options]\n\nPhase-2 one-command loop:\n  preflight -> work -> push-proof -> report-th -> validator -> optional issue post\n\nRequired:\n  --changed <text>\n  --why <text>\n  --next <text>\n\nOptions:\n  --candidate <file>      Candidate file for anti-repeat preflight (repeatable)\n  --work <cmd>            Shell command for the work step\n  --state <path>          State file (default: .state/jin-loop-last.json)\n  --cooldown-min <n>      Preflight cooldown (default: 8)\n  --commit <sha>          Expected commit (default: current HEAD)\n  --branch <name>         Expected branch (default: current branch)\n  --link <url>            Evidence link (default: infer from origin + HEAD)\n  --preflight-json <path> Save preflight JSON (default: .state/jin-loop-preflight.json)\n  --push-proof-json <path> Save push-proof JSON (default: .state/jin-loop-push-proof.json)\n  --report-file <path>    Save Thai report output (default: .state/jin-loop-report-th.txt)\n  --max-line-chars <n>    Max chars per report line (default: 180)\n  --repo <owner/repo>     Repo for gh issue comment\n  --issue <number>        Issue number for gh issue comment\n  --post                  Post report to issue when --repo/--issue are provided\n`);
+      console.log(`Usage: node scripts/jin-loop-run.mjs [options]\n\nPhase-2 one-command loop:\n  preflight -> work -> push-proof -> report-th -> validator -> optional issue post\n\nRequired:\n  --changed <text>\n  --why <text>\n  --next <text>\n\nOptions:\n  --candidate <file>      Candidate file for anti-repeat preflight (repeatable)\n  --work <cmd>            Shell command for the work step\n  --state <path>          State file (default: .state/jin-loop-last.json)\n  --cooldown-min <n>      Preflight cooldown (default: 8)\n  --commit <sha>          Expected commit (default: current HEAD)\n  --branch <name>         Expected branch (default: current branch)\n  --link <url>            Evidence link (default: infer from origin + HEAD)\n  --preflight-json <path> Save preflight JSON (default: .state/jin-loop-preflight.json)\n  --push-proof-json <path> Save push-proof JSON (default: .state/jin-loop-push-proof.json)\n  --report-file <path>    Save Thai report output (default: .state/jin-loop-report-th.txt)\n  --max-line-chars <n>    Max chars per report line (default: 180)\n  --repo <owner/repo>     Repo for gh issue comment\n  --issue <number>        Issue number for gh issue comment (must be canonical #3 when --post)\n  --post                  Post report to issue when --repo/--issue are provided\n`);
       process.exit(0);
     }
   }
@@ -115,6 +115,7 @@ function writeMaybeJson(pathname, text, fallbackObj) {
 
 function main() {
   const opt = parseArgs(process.argv.slice(2));
+  const canonicalIssue = "3";
 
   ensureDirFor(opt.preflightJson);
   ensureDirFor(opt.pushProofJson);
@@ -195,6 +196,10 @@ function main() {
   if (opt.post) {
     if (!opt.repo || !opt.issue) {
       console.error("--post requires --repo and --issue");
+      process.exit(2);
+    }
+    if (String(opt.issue) !== canonicalIssue) {
+      console.error(`Canonical board lock: expected issue #${canonicalIssue}, got #${opt.issue}`);
       process.exit(2);
     }
     runShell(`gh issue comment ${opt.issue} --repo ${opt.repo} --body-file ${opt.reportFile}`);
