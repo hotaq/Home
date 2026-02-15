@@ -10,6 +10,7 @@ Generate a ready-to-use agent folder with:
 - thread card template
 - onboarding checklist
 - per-agent README
+- OpenClaw workspace files (`AGENTS.md`, `SOUL.md`, `USER.md`, `IDENTITY.md`, `memory/`)
 
 ### Usage
 

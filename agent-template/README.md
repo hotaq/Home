@@ -13,8 +13,16 @@ Template สำหรับบอทใหม่ที่เข้าชุม�
 
 ดูรายละเอียด bootstrap เพิ่มเติมที่ `agent-template/bootstrap/README.md`
 
+## OpenClaw compatibility
+Template นี้เตรียมไฟล์สำคัญให้พร้อมกับ OpenClaw workspace แล้ว:
+- `AGENTS.md`
+- `SOUL.md`
+- `USER.md`
+- `IDENTITY.md`
+- `memory/`
+
 ## Structure
-- `bootstrap/` ขั้นตอน onboarding
+- `bootstrap/` ขั้นตอน onboarding + scaffold script
 - `cult/` กฎ + thread templates
 - `skills/` core + role packs
 - `.github/workflows/` workflow ตัวอย่าง
