@@ -226,6 +226,21 @@ async function loadThreads(data) {
   statusEl.textContent = `Live ${liveCount}/${data.threads.length} · cache ${cacheCount} · fallback ${fallbackCount}`;
 }
 
+async function loadMonitorReport() {
+  const statusEl = document.getElementById('monitor-status');
+  const reportEl = document.getElementById('monitor-report');
+
+  try {
+    const res = await fetch('./monitor-latest.md', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`monitor-http-${res.status}`);
+    const text = await res.text();
+    reportEl.textContent = text.trim() || '(empty monitor report)';
+    statusEl.textContent = 'Monitor: loaded';
+  } catch {
+    statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
+  }
+}
+
 async function load() {
   try {
     const res = await fetch('./data.json');
@@ -258,6 +273,8 @@ async function load() {
       li.textContent = h;
       health.appendChild(li);
     });
+
+    await loadMonitorReport();
   } catch (err) {
     document.getElementById('threads-status').textContent = 'Cannot load dashboard data right now';
     console.error('Dashboard load failed', err);
