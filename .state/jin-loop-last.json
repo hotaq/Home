@@ -1,9 +1,9 @@
 {
-  "lastRunAt": "2026-02-15T09:56:00Z",
+  "lastRunAt": "2026-02-15T10:46:11.884Z",
   "lastTouchedFiles": [
-    "docs/process/jin-sprint-micro-loop.md",
-    "docs/process/jin-sprint-self-review.md"
+    "scripts/check-manifest.mjs",
+    "package.json"
   ],
   "lastCommit": null,
-  "nextHint": "Add scripts/jin-loop-stamp.sh to read/write this state and suggest a non-repeated target file."
+  "nextHint": "Wire check:manifest into CI before orchestrator run"
 }
