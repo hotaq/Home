@@ -2,7 +2,7 @@
 import fs from "node:fs";
 
 function parseArgs(argv) {
-  const out = { file: "", text: "", maxLineChars: 180, requireBoard: "" };
+  const out = { file: "", text: "", maxLineChars: 180, requireBoard: "", requireLine1Path: false };
 
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -10,8 +10,9 @@ function parseArgs(argv) {
     else if (a === "--text") out.text = argv[++i] ?? "";
     else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
     else if (a === "--require-board") out.requireBoard = String(argv[++i] ?? "").trim();
+    else if (a === "--require-line1-path") out.requireLine1Path = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>]\n\nValidate Thai 4-line loop report format.`);
+      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>] [--require-line1-path]\n\nValidate Thai 4-line loop report format.`);
       process.exit(0);
     }
   }
@@ -76,6 +77,15 @@ if (opt.requireBoard) {
   const hasBoardRef = lines.some((line) => line.includes(boardTag));
   if (!hasBoardRef) {
     fail(`ต้องอ้างอิง canonical board ${boardTag} อย่างน้อย 1 บรรทัด`, 8);
+  }
+}
+
+if (opt.requireLine1Path) {
+  const line1 = lines[0].replace(/^\d+\)\s*/, "");
+  const line1Body = line1.replace(/^เปลี่ยน:\s*/, "");
+  const hasPathLikeToken = /(?:[A-Za-z0-9_.-]+\/)+[A-Za-z0-9_.-]+/.test(line1Body);
+  if (!hasPathLikeToken) {
+    fail("บรรทัด 'เปลี่ยน:' ต้องมี path ของไฟล์ที่แก้ (เช่น docs/process/x.md)", 11);
   }
 }
 

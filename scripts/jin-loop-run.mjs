@@ -196,6 +196,7 @@ function main() {
     String(opt.maxLineChars),
     "--require-board",
     canonicalIssue,
+    "--require-line1-path",
   ]);
 
   if (opt.post) {
