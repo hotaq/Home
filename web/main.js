@@ -72,7 +72,9 @@ async function fetchIssueMeta(thread, { timeoutMs = 6000 } = {}) {
       title: issue.title,
       state: issue.state,
       number: issue.number,
-      repo: `${parsed.owner}/${parsed.repo}`
+      repo: `${parsed.owner}/${parsed.repo}`,
+      comments: issue.comments,
+      updatedAt: issue.updated_at
     };
 
     setCachedIssue(thread, issueMeta);
@@ -166,6 +168,13 @@ function renderQuickActions(data) {
   });
 }
 
+function formatUpdatedAt(iso) {
+  if (!iso) return 'n/a';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'n/a';
+  return d.toLocaleString('th-TH', { hour12: false });
+}
+
 function renderThreadItem(threadsEl, thread, result) {
   const li = document.createElement('li');
 
@@ -180,6 +189,8 @@ function renderThreadItem(threadsEl, thread, result) {
       <span class="meta">(${issueMeta.repo})</span>
       <span class="badge ${stateClass}">${issueMeta.state}</span>
       <span class="meta">· ${sourceText}</span>
+      <span class="meta">· 💬 ${issueMeta.comments ?? 0}</span>
+      <span class="meta">· updated ${formatUpdatedAt(issueMeta.updatedAt)}</span>
     `;
   } else {
     const reason = result?.reason ? ` · ${result.reason}` : '';
