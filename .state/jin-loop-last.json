@@ -1,9 +1,8 @@
 {
-  "lastRunAt": "2026-02-15T11:15:00Z",
+  "lastRunAt": "2026-02-15T11:35:00Z",
   "lastTouchedFiles": [
-    "scripts/jin-loop-push-proof.mjs",
-    "package.json"
+    "scripts/jin-loop-report-th.mjs"
   ],
-  "lastCommit": "pending",
-  "nextHint": "wire check:push-proof into automation report pipeline so reports auto-downgrade to committed-locally when verification fails"
+  "lastCommit": null,
+  "nextHint": "integrate jin-loop-report-th.mjs into orchestrator flow so Thai status is auto-generated from run metadata"
 }
