@@ -1,9 +1,9 @@
 {
-  "lastRunAt": "2026-02-15T10:46:11.884Z",
+  "lastRunAt": "2026-02-15T11:15:00Z",
   "lastTouchedFiles": [
-    "scripts/check-manifest.mjs",
+    "scripts/jin-loop-push-proof.mjs",
     "package.json"
   ],
-  "lastCommit": null,
-  "nextHint": "Wire check:manifest into CI before orchestrator run"
+  "lastCommit": "pending",
+  "nextHint": "wire check:push-proof into automation report pipeline so reports auto-downgrade to committed-locally when verification fails"
 }
