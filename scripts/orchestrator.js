@@ -28,7 +28,7 @@ function getActorLabel(botId) {
   return "🤖 [Cult Bot]";
 }
 
-function withAuditFooter({ body, actorId, routerDecision }) {
+function withAuditFooter({ body, actorId, routerDecision, dedupeKey }) {
   const runId = process.env.GITHUB_RUN_ID || "local";
   const source = process.env.GITHUB_ACTOR || "unknown";
   const ts = new Date().toISOString();
@@ -36,6 +36,9 @@ function withAuditFooter({ body, actorId, routerDecision }) {
   let footer = `---\nactor: ${actorId}\nsource: ${source}\nrun-id: ${runId}\nts: ${ts}`;
   if (routerDecision) {
     footer += `\nrouter: ${routerDecision}`;
+  }
+  if (dedupeKey) {
+    footer += `\ndedupe-key: ${dedupeKey}`;
   }
   return `${body}\n\n${footer}`;
 }
@@ -194,6 +197,7 @@ async function handleMentionRoute({
   commentBody,
   commentAuthor,
   manifest,
+  dedupeKeyFor,
 }) {
   // Don't process bot comments (prevent loops)
   if (
@@ -229,6 +233,7 @@ async function handleMentionRoute({
           actorId: "jin-core",
           body: proxyBody,
           routerDecision: `proxy for disabled ${bot.id}`,
+          dedupeKey: dedupeKeyFor?.("jin-core", `proxy-disabled-${bot.id}`),
         });
       }
       continue;
@@ -265,6 +270,7 @@ async function handleMentionRoute({
       actorId: bot.id,
       body: reply,
       routerDecision: `mention-route to ${bot.id}`,
+      dedupeKey: dedupeKeyFor?.(bot.id, `mention-route-${bot.id}`),
     });
 
     console.log(`Routed mention to ${bot.id}`);
@@ -288,6 +294,7 @@ async function handleMentionRoute({
         actorId: "jin-core",
         body: proxyBody,
         routerDecision: `proxy for unknown @${name}`,
+        dedupeKey: dedupeKeyFor?.("jin-core", `proxy-unknown-${name}`),
       });
       console.log(`Jin proxy for unknown mention: @${name}`);
     }
@@ -320,6 +327,24 @@ function ritualTemplate(botId, topic) {
   return `${getActorLabel(botId)} ritual started: ${t}`;
 }
 
+async function hasDedupeComment({ owner, repo, issueNumber, actorId, dedupeKey }) {
+  if (!dedupeKey) return false;
+
+  const comments = await octokit.paginate(octokit.issues.listComments, {
+    owner,
+    repo,
+    issue_number: issueNumber,
+    per_page: 100,
+  });
+
+  return comments.some(
+    (c) =>
+      c.body.includes(`actor: ${actorId}`) &&
+      c.body.includes(`dedupe-key: ${dedupeKey}`) &&
+      (c.user.login === "github-actions" || c.user.login === "github-actions[bot]")
+  );
+}
+
 async function postComment({
   owner,
   repo,
@@ -327,8 +352,23 @@ async function postComment({
   actorId,
   body,
   routerDecision,
+  dedupeKey,
 }) {
-  const auditedReply = withAuditFooter({ body, actorId, routerDecision });
+  if (dedupeKey) {
+    const duplicated = await hasDedupeComment({
+      owner,
+      repo,
+      issueNumber,
+      actorId,
+      dedupeKey,
+    });
+    if (duplicated) {
+      console.log(`Duplicate detected for ${actorId} (${dedupeKey}), skip posting.`);
+      return null;
+    }
+  }
+
+  const auditedReply = withAuditFooter({ body, actorId, routerDecision, dedupeKey });
   return octokit.issues.createComment({
     owner,
     repo,
@@ -350,6 +390,9 @@ async function main() {
   const issueNumber = Number(process.env.ISSUE_NUMBER || 0);
   const commentBody = process.env.COMMENT_BODY || "";
   const commentAuthor = process.env.COMMENT_AUTHOR || process.env.GITHUB_ACTOR || "unknown";
+  const commentId = String(process.env.COMMENT_ID || "").trim();
+  const dedupeKeyFor = (actorId, action) =>
+    commentId ? `${issueNumber}:${commentId}:${actorId}:${action}` : undefined;
 
   if (!issueNumber || !commentBody) {
     console.log("No issue context payload. Exiting.");
@@ -373,7 +416,14 @@ async function main() {
         ? `${getActorLabel(actorId)} อัญเชิญ **${found.displayName}** สำเร็จ — role: ${found.role}`
         : `${getActorLabel(actorId)} ⚠️ ไม่พบบอท ${target} ใน manifest`;
 
-      await postComment({ owner, repo, issueNumber, actorId, body: reply });
+      await postComment({
+        owner,
+        repo,
+        issueNumber,
+        actorId,
+        body: reply,
+        dedupeKey: dedupeKeyFor(actorId, "summon"),
+      });
       console.log("Handled /summon");
       return;
     }
@@ -383,7 +433,14 @@ async function main() {
       const q = commentBody.replace("/oracle", "").trim();
       const reply = `${getActorLabel(actorId)} รับคำถามแล้ว -> "${q || "(ไม่มีคำถาม)"}"`;
 
-      await postComment({ owner, repo, issueNumber, actorId, body: reply });
+      await postComment({
+        owner,
+        repo,
+        issueNumber,
+        actorId,
+        body: reply,
+        dedupeKey: dedupeKeyFor(actorId, "oracle"),
+      });
       console.log("Handled /oracle");
       return;
     }
@@ -392,7 +449,14 @@ async function main() {
       const actorId = "jin-core";
       const reply = `${getActorLabel(actorId)} 🔕 โหมดเงียบถูกเปิดสำหรับเธรดนี้ (mock)`;
 
-      await postComment({ owner, repo, issueNumber, actorId, body: reply });
+      await postComment({
+        owner,
+        repo,
+        issueNumber,
+        actorId,
+        body: reply,
+        dedupeKey: dedupeKeyFor(actorId, "silence"),
+      });
       console.log("Handled /silence");
       return;
     }
@@ -408,6 +472,7 @@ async function main() {
           issueNumber,
           actorId,
           body: ritualTemplate(actorId, topic),
+          dedupeKey: dedupeKeyFor(actorId, `ritual-${actorId}`),
         })
       );
 
@@ -415,9 +480,12 @@ async function main() {
 
       const summaryActor = "jin-core";
       const links = results
-        .map(
-          (r, i) => `- ${getActorLabel(ritualBots[i])}: ${r.data.html_url}`
-        )
+        .map((r, i) => {
+          if (!r?.data?.html_url) {
+            return `- ${getActorLabel(ritualBots[i])}: (skip duplicate)`;
+          }
+          return `- ${getActorLabel(ritualBots[i])}: ${r.data.html_url}`;
+        })
         .join("\n");
 
       const summary = `${getActorLabel(summaryActor)} ✅ เปิดพิธีแบบขนานแล้ว\n\nหัวข้อ: **${topic || "(ยังไม่ระบุ)"}**\n\nเธรดย่อยที่สร้างอัตโนมัติ:\n${links}\n\nคำสั่งถัดไปแนะนำ: ใช้ /council vote <proposal> หลังจากอ่านครบ 3 เธรด`;
@@ -428,6 +496,7 @@ async function main() {
         issueNumber,
         actorId: summaryActor,
         body: summary,
+        dedupeKey: dedupeKeyFor(summaryActor, "ritual-summary"),
       });
       console.log("Handled /ritual in parallel");
       return;
@@ -443,6 +512,7 @@ async function main() {
       issueNumber,
       actorId,
       body: fallback,
+      dedupeKey: dedupeKeyFor(actorId, "unknown-command"),
     });
     return;
   }
@@ -455,6 +525,7 @@ async function main() {
     commentBody,
     commentAuthor,
     manifest,
+    dedupeKeyFor,
   });
 
   if (handled) {
