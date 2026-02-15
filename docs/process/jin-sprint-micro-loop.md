@@ -89,10 +89,10 @@ Use this exact format for fast status updates (must match validator prefixes):
 
 ## 9) Report quality gate (before sending)
 Quick-check these 4 points in <30 seconds:
-- Line 1 contains exact changed file path.
-- Line 2 states one measurable outcome (fewer repeats, clearer owner, faster triage, etc.).
-- Line 3 includes honest risk level + brief reason.
-- Line 4 names one concrete next step and, if committed, short SHA/link.
+- Line 1 (`เปลี่ยน:`) contains exact changed file path.
+- Line 2 (`ช่วยได้:`) states one measurable outcome (fewer repeats, clearer owner, faster triage, etc.) and may include a short risk note if needed.
+- Line 3 (`ถัดไป:`) names one concrete next micro-step.
+- Line 4 (`หลักฐาน:`) includes commit SHA/link, or explicit blocker when push is not verified.
 
 Machine-check (recommended):
 - `node scripts/jin-loop-validate-th-report.mjs --file <report.txt>`
