@@ -100,6 +100,72 @@ async function fetchIssueMeta(thread, { timeoutMs = 6000 } = {}) {
   }
 }
 
+function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+
+  return new Promise((resolve, reject) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      resolve();
+    } catch (err) {
+      reject(err);
+    } finally {
+      textarea.remove();
+    }
+  });
+}
+
+function renderQuickActions(data) {
+  const container = document.getElementById('quick-actions');
+  const statusEl = document.getElementById('quick-actions-status');
+
+  const primaryThread = data.threads?.[0]?.url;
+  const boardThread = data.threads?.[1]?.url;
+
+  const actions = [
+    { label: 'คัดลอก /ritual', copy: '/ritual <topic>\nContext:\nDecision:\nAction:' },
+    { label: 'คัดลอก /council vote', copy: '/council vote <proposal>\nOption A:\nOption B:\nDeadline:' },
+    primaryThread ? { label: 'เปิด Recruitment', href: primaryThread } : null,
+    boardThread ? { label: 'เปิด Trial Board', href: boardThread } : null
+  ].filter(Boolean);
+
+  actions.forEach((action) => {
+    if (action.copy) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'quick-btn';
+      button.textContent = action.label;
+      button.addEventListener('click', async () => {
+        try {
+          await copyText(action.copy);
+          statusEl.textContent = `คัดลอกแล้ว: ${action.label}`;
+        } catch {
+          statusEl.textContent = 'คัดลอกไม่สำเร็จ ลองใหม่อีกครั้ง';
+        }
+      });
+      container.appendChild(button);
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.className = 'quick-btn';
+    link.href = action.href;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = action.label;
+    container.appendChild(link);
+  });
+}
+
 function renderThreadItem(threadsEl, thread, result) {
   const li = document.createElement('li');
 
@@ -155,6 +221,7 @@ async function load() {
     `;
 
     await loadThreads(data);
+    renderQuickActions(data);
 
     const roster = document.getElementById('roster');
     data.roster.forEach((r) => {
