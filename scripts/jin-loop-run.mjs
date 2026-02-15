@@ -191,6 +191,8 @@ function main() {
     opt.reportFile,
     "--max-line-chars",
     String(opt.maxLineChars),
+    "--require-board",
+    canonicalIssue,
   ]);
 
   if (opt.post) {
