@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "orchestrate": "node scripts/orchestrator.js"
+    "orchestrate": "node scripts/orchestrator.js",
+    "test:router": "node scripts/test-mention-router.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^22.0.0"
