@@ -8,6 +8,7 @@ function parseArgs(argv) {
     next: "",
     commit: "",
     link: "",
+    board: "3",
     preflightJson: "",
     pushProofJson: "",
     maxLineChars: 180,
@@ -22,9 +23,10 @@ function parseArgs(argv) {
     else if (a === "--link") out.link = argv[++i] ?? "";
     else if (a === "--preflight-json") out.preflightJson = argv[++i] ?? "";
     else if (a === "--push-proof-json") out.pushProofJson = argv[++i] ?? "";
+    else if (a === "--board") out.board = argv[++i] ?? "3";
     else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--preflight-json <path>] [--push-proof-json <path>] [--max-line-chars <n>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
+      console.log(`Usage: node scripts/jin-loop-report-th.mjs --changed <text> --why <text> --next <text> [--commit <sha>] [--link <url>] [--board <id>] [--preflight-json <path>] [--push-proof-json <path>] [--max-line-chars <n>]\n\nOutputs exactly 4 Thai lines for cron loop reports.`);
       process.exit(0);
     }
   }
@@ -95,6 +97,9 @@ const dirtyNote = preflight?.dirtyWorkspace
   ? " (กันพลาด: มีไฟล์ค้าง จึงแยก stage เฉพาะงานนี้)"
   : "";
 
+const boardId = oneLine(opt.board || "3").replace(/^#*/, "");
+const boardNote = boardId ? ` (ยึดบอร์ดหลัก #${boardId})` : "";
+
 function pushStatusText(proof, commit, link) {
   if (!proof) {
     if (link) return oneLine(link);
@@ -119,7 +124,7 @@ function pushStatusText(proof, commit, link) {
 }
 
 const line1 = `เปลี่ยน: ${oneLine(opt.changed)}`;
-const line2 = `ช่วยได้: ${oneLine(opt.why)}${dirtyNote}`;
+const line2 = `ช่วยได้: ${oneLine(opt.why)}${boardNote}${dirtyNote}`;
 const line3 = `ถัดไป: ${oneLine(opt.next)}`;
 const line4 = `หลักฐาน: ${pushStatusText(pushProof, opt.commit, opt.link)}`;
 
