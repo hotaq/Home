@@ -60,6 +60,7 @@ const lines = raw.split("\n").map((l) => l.trim());
 if (lines.length !== 4) fail(`ต้องมี 4 บรรทัดพอดี (เจอ ${lines.length})`, 5);
 
 const prefixes = ["เปลี่ยน:", "ช่วยได้:", "ถัดไป:", "หลักฐาน:"];
+const lineBodies = [];
 for (let i = 0; i < prefixes.length; i += 1) {
   const bare = lines[i];
   const numbered = bare.replace(/^\d+\)\s*/, "");
@@ -70,6 +71,17 @@ for (let i = 0; i < prefixes.length; i += 1) {
   if (opt.requireNumbered && !new RegExp(`^${i + 1}\\)\\s+`).test(bare)) {
     fail(`บรรทัด ${i + 1} ต้องเป็นรูปแบบเลขลำดับ '${i + 1}) ...'`, 12);
   }
+
+  const body = numbered.slice(prefixes[i].length).trim();
+  if (!body) {
+    fail(`บรรทัด ${i + 1} ('${prefixes[i]}') ห้ามเว้นว่าง`, 13);
+  }
+  lineBodies.push(body);
+}
+
+const uniqueBodies = new Set(lineBodies.map((x) => x.toLowerCase()));
+if (uniqueBodies.size < lineBodies.length) {
+  fail("เนื้อหาแต่ละบรรทัดห้ามซ้ำกัน เพื่อลดรายงานสแปมหรือ no-op", 14);
 }
 
 const tooLong = lines
