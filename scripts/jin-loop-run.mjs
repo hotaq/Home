@@ -197,6 +197,7 @@ function main() {
     "--require-board",
     canonicalIssue,
     "--require-line1-path",
+    "--require-numbered",
   ]);
 
   if (opt.post) {

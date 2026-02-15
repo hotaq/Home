@@ -2,7 +2,14 @@
 import fs from "node:fs";
 
 function parseArgs(argv) {
-  const out = { file: "", text: "", maxLineChars: 180, requireBoard: "", requireLine1Path: false };
+  const out = {
+    file: "",
+    text: "",
+    maxLineChars: 180,
+    requireBoard: "",
+    requireLine1Path: false,
+    requireNumbered: false,
+  };
 
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -11,8 +18,9 @@ function parseArgs(argv) {
     else if (a === "--max-line-chars") out.maxLineChars = Number(argv[++i] ?? "180");
     else if (a === "--require-board") out.requireBoard = String(argv[++i] ?? "").trim();
     else if (a === "--require-line1-path") out.requireLine1Path = true;
+    else if (a === "--require-numbered") out.requireNumbered = true;
     else if (a === "-h" || a === "--help") {
-      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>] [--require-line1-path]\n\nValidate Thai 4-line loop report format.`);
+      console.log(`Usage: node scripts/jin-loop-validate-th-report.mjs [--file <path> | --text <report>] [--max-line-chars <n>] [--require-board <id>] [--require-line1-path] [--require-numbered]\n\nValidate Thai 4-line loop report format.`);
       process.exit(0);
     }
   }
@@ -57,6 +65,10 @@ for (let i = 0; i < prefixes.length; i += 1) {
   const numbered = bare.replace(/^\d+\)\s*/, "");
   if (!numbered.startsWith(prefixes[i])) {
     fail(`บรรทัด ${i + 1} ต้องขึ้นต้นด้วย '${prefixes[i]}' (ยอมรับรูปแบบ '1) ${prefixes[i]}' ด้วย)`, 6);
+  }
+
+  if (opt.requireNumbered && !new RegExp(`^${i + 1}\\)\\s+`).test(bare)) {
+    fail(`บรรทัด ${i + 1} ต้องเป็นรูปแบบเลขลำดับ '${i + 1}) ...'`, 12);
   }
 }
 
