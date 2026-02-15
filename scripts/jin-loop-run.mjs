@@ -281,7 +281,13 @@ function main() {
     runShell(`gh issue comment ${opt.issue} --repo ${opt.repo} --body-file ${opt.reportFile}`);
   }
 
-  updateLoopState(opt.stateFile, opt.candidates, headShort, opt.next);
+  if (isBlockerMode) {
+    // In blocker mode, avoid marking candidate files as "touched" to prevent
+    // anti-repeat guardrails from blocking the next real run.
+    updateLoopState(opt.stateFile, [], null, `blocker: ${String(opt.blocker || "blocked").trim()}`);
+  } else {
+    updateLoopState(opt.stateFile, opt.candidates, headShort, opt.next);
+  }
   console.log(reportText);
 }
 
