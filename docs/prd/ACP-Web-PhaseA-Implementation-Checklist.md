@@ -29,7 +29,7 @@ Canonical context: Issue #3
 - [x] ทำ smoke checks (`node --check`, status HTTP, data presence) — `scripts/phasea-smoke-checks.mjs` + `npm run check:phasea-smoke`
 
 ## E) Dry-run & Acceptance
-- [ ] Dry-run รอบที่ 1: system-level checks
+- [x] Dry-run รอบที่ 1: system-level checks — `npm run check:phasea-dryrun1` + `docs/prd/evidence/phasea-dryrun-round1.md`
 - [ ] Dry-run รอบที่ 2: interactive checks
 - [ ] บันทึกผลลง Issue #3 เป็น Closure Card
 - [ ] สรุป KPI เริ่มต้น (duplicate/noise, stale handling, recovery time)
