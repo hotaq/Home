@@ -19,6 +19,7 @@ Canonical context: Issue #3
 - [x] บันทึกผลไว้ที่ `docs/prd/evidence/phaseb-controlled-rollout-round1.md`
 - [x] รันรอบควบคุมเพิ่ม (tightened policy) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round2.md`
 - [x] รันรอบควบคุมเพิ่ม (policy-first + capped backoff) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round4.md`
+- [x] รันรอบควบคุมเพิ่ม (lockcheck-only + tight retry cap) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round5.md`
 
 ## B4) Context Lock + Safety
 - [x] คง canonical context lock #3 ในทุก flow
