@@ -322,6 +322,7 @@ function updateNextRefreshUI({ hidden = document.hidden } = {}) {
 }
 
 const MONITOR_REPORT_CACHE_KEY = 'monitor-report-cache:v1';
+const MONITOR_LAST_SUCCESS_KEY = 'monitor-last-success:v1';
 
 function getCachedMonitorReport() {
   try {
@@ -348,6 +349,43 @@ function setCachedMonitorReport({ text, fetchedAt }) {
   } catch {
     // Ignore cache write failure.
   }
+}
+
+function getMonitorLastSuccessTs() {
+  try {
+    const raw = localStorage.getItem(MONITOR_LAST_SUCCESS_KEY);
+    if (!raw) return null;
+    const ts = Number(raw);
+    return Number.isFinite(ts) && ts > 0 ? ts : null;
+  } catch {
+    return null;
+  }
+}
+
+function setMonitorLastSuccessTs(ts = Date.now()) {
+  try {
+    localStorage.setItem(MONITOR_LAST_SUCCESS_KEY, String(ts));
+  } catch {
+    // Ignore localStorage write failure.
+  }
+}
+
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '--';
+  return d.toLocaleString('th-TH', { hour12: false });
+}
+
+function renderMonitorLastSuccess(successEl, ts) {
+  if (!successEl) return;
+  if (!ts) {
+    successEl.textContent = 'last success: --';
+    successEl.className = 'meta';
+    return;
+  }
+
+  successEl.textContent = `last success: ${formatDateTime(ts)}`;
+  successEl.className = 'meta';
 }
 
 function renderIncidentLines(text = '') {
@@ -456,11 +494,14 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   const badgeEl = document.getElementById('monitor-badge');
   const freshnessEl = document.getElementById('monitor-freshness');
   const checkedEl = document.getElementById('monitor-last-check');
+  const successEl = document.getElementById('monitor-last-success');
   const sourceEl = document.getElementById('monitor-source');
   const refreshStatusEl = document.getElementById('monitor-refresh-status');
   const refreshBtn = document.getElementById('monitor-refresh-btn');
 
   if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !sourceEl || !refreshStatusEl) return;
+
+  renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
 
   const state = getMonitorLoadState();
   if (state.inFlight) {
@@ -508,7 +549,10 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
 
     const lastModifiedHeader = res.headers.get('last-modified');
     const fetchedAt = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : Date.now();
+    const successTs = Date.now();
     setCachedMonitorReport({ text, fetchedAt });
+    setMonitorLastSuccessTs(successTs);
+    renderMonitorLastSuccess(successEl, successTs);
     updateMonitorFreshness(fetchedAt, freshnessEl);
     checkedEl.textContent = `checked: ${formatCheckedAt()}`;
 
@@ -528,6 +572,7 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       renderIncidentLines(cached.text);
       updateMonitorFreshness(cached.fetchedAt, freshnessEl);
       checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+      renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
       statusEl.textContent = 'Monitor: loaded from local cache';
       badgeEl.textContent = 'cached';
       badgeEl.className = 'badge badge-neutral';
@@ -543,6 +588,7 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       sourceEl.textContent = `source: ${source} · fail (${reason})`;
       sourceEl.className = 'meta meta-warn';
       checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+      renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
       refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
     }
   } finally {
