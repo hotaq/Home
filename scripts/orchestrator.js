@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import fs from "node:fs";
+import crypto from "node:crypto";
 
 const token = process.env.GITHUB_TOKEN;
 if (!token) {
@@ -35,6 +36,18 @@ function escapeRegExp(text) {
 const CANONICAL_CONTEXT_ID = "issue-3";
 
 const DEFAULT_EVENT_SOURCE = "auto";
+const ALLOWED_EVENT_STATUS = new Set(["send", "ack", "error", "retry"]);
+const ALLOWED_EVENT_SOURCE = new Set(["manual", "auto", "cache"]);
+
+function normalizeEventStatus(status) {
+  if (ALLOWED_EVENT_STATUS.has(status)) return status;
+  return "error";
+}
+
+function normalizeEventSource(source) {
+  if (ALLOWED_EVENT_SOURCE.has(source)) return source;
+  return DEFAULT_EVENT_SOURCE;
+}
 
 function createEventEnvelope({
   issueNumber,
@@ -46,17 +59,25 @@ function createEventEnvelope({
 }) {
   const updatedAt = new Date().toISOString();
   const contextId = Number(issueNumber) ? `issue-${Number(issueNumber)}` : "issue-unknown";
-  const eventId = `${runId}:${actorId}:${Date.now()}`;
+  const eventId = `${runId}:${actorId}:${crypto.randomUUID()}`;
 
   return {
     event_id: eventId,
+    channel: "acp",
     context_id: contextId,
-    status,
-    source,
+    status: normalizeEventStatus(status),
+    source: normalizeEventSource(source),
     updated_at: updatedAt,
     run_id: runId,
     source_actor: sourceActor,
   };
+}
+
+function emitEventLog({ issueNumber, actorId, status, source = DEFAULT_EVENT_SOURCE, reason = "" }) {
+  const envelope = createEventEnvelope({ issueNumber, actorId, status, source });
+  const message = reason ? `${status}: ${reason}` : status;
+  console.log(`[acp-event] ${message} | ${JSON.stringify(envelope)}`);
+  return envelope;
 }
 
 function mapGitHubErrorToHuman(err) {
@@ -80,6 +101,7 @@ function withAuditFooter({ body, actorId, routerDecision, dedupeKey, issueNumber
 
   let footer = `---\nactor: ${actorId}\nsource: ${envelope.source_actor}\nrun-id: ${envelope.run_id}\nts: ${envelope.updated_at}`;
   footer += `\nevent_id: ${envelope.event_id}`;
+  footer += `\nchannel: ${envelope.channel}`;
   footer += `\ncontext_id: ${envelope.context_id}`;
   footer += `\nstatus: ${envelope.status}`;
   footer += `\nsource_type: ${envelope.source}`;
@@ -416,6 +438,13 @@ async function postComment({
       dedupeKey,
     });
     if (duplicated) {
+      emitEventLog({
+        issueNumber,
+        actorId,
+        status: "ack",
+        source,
+        reason: `duplicate-skip (${dedupeKey})`,
+      });
       console.log(`Duplicate detected for ${actorId} (${dedupeKey}), skip posting.`);
       return null;
     }
@@ -432,36 +461,49 @@ async function postComment({
   });
 
   try {
-    return await octokit.issues.createComment({
+    const res = await octokit.issues.createComment({
       owner,
       repo,
       issue_number: issueNumber,
       body: auditedReply,
     });
+    emitEventLog({ issueNumber, actorId, status: "send", source, reason: "comment-posted" });
+    return res;
   } catch (err) {
     const humanError = mapGitHubErrorToHuman(err);
     console.error(`Post failed (${actorId}): ${humanError}`);
 
     const shouldRetry = Number(err?.status || 0) >= 500 || Number(err?.status || 0) === 429;
-    if (!shouldRetry) throw err;
+    if (!shouldRetry) {
+      emitEventLog({ issueNumber, actorId, status: "error", source, reason: humanError });
+      throw err;
+    }
 
     console.log(`Retry once for ${actorId} in 1200ms...`);
     await sleep(1200);
 
-    return octokit.issues.createComment({
-      owner,
-      repo,
-      issue_number: issueNumber,
-      body: withAuditFooter({
-        body,
-        actorId,
-        routerDecision: routerDecision ? `${routerDecision} (retry)` : "retry",
-        dedupeKey,
-        issueNumber,
-        status: "retry",
-        source,
-      }),
-    });
+    try {
+      const retryRes = await octokit.issues.createComment({
+        owner,
+        repo,
+        issue_number: issueNumber,
+        body: withAuditFooter({
+          body,
+          actorId,
+          routerDecision: routerDecision ? `${routerDecision} (retry)` : "retry",
+          dedupeKey,
+          issueNumber,
+          status: "retry",
+          source,
+        }),
+      });
+      emitEventLog({ issueNumber, actorId, status: "retry", source, reason: "retry-posted" });
+      return retryRes;
+    } catch (retryErr) {
+      const retryHumanError = mapGitHubErrorToHuman(retryErr);
+      emitEventLog({ issueNumber, actorId, status: "error", source, reason: `retry-failed: ${retryHumanError}` });
+      throw retryErr;
+    }
   }
 }
 
