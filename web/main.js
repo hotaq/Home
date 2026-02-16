@@ -293,6 +293,71 @@ function formatCheckedAt(ts = Date.now()) {
   return new Date(ts).toLocaleTimeString('th-TH', { hour12: false });
 }
 
+function formatCountdown(msRemaining) {
+  const safeMs = Math.max(0, msRemaining);
+  const totalSec = Math.ceil(safeMs / 1000);
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function updateNextRefreshUI({ hidden = document.hidden } = {}) {
+  const nextEl = document.getElementById('monitor-next-refresh');
+  if (!nextEl) return;
+
+  if (hidden) {
+    nextEl.textContent = 'next refresh: paused (tab hidden)';
+    nextEl.className = 'meta meta-warn';
+    return;
+  }
+
+  if (!window.monitorAutoRefreshAt) {
+    nextEl.textContent = 'next refresh: --';
+    nextEl.className = 'meta';
+    return;
+  }
+
+  nextEl.textContent = `next refresh: ${formatCountdown(window.monitorAutoRefreshAt - Date.now())}`;
+  nextEl.className = 'meta';
+}
+
+function startMonitorAutoRefresh(intervalMs = 5 * 60_000) {
+  if (window.monitorAutoRefreshTimer) clearInterval(window.monitorAutoRefreshTimer);
+  if (window.monitorRefreshCountdownTimer) clearInterval(window.monitorRefreshCountdownTimer);
+
+  const run = async () => {
+    if (document.hidden) {
+      updateNextRefreshUI({ hidden: true });
+      return;
+    }
+    await loadMonitorReport({ source: 'auto' });
+    window.monitorAutoRefreshAt = Date.now() + intervalMs;
+    updateNextRefreshUI();
+  };
+
+  window.monitorAutoRefreshAt = Date.now() + intervalMs;
+  updateNextRefreshUI();
+  window.monitorAutoRefreshTimer = setInterval(run, intervalMs);
+  window.monitorRefreshCountdownTimer = setInterval(() => updateNextRefreshUI(), 1000);
+
+  if (!window.monitorVisibilityBound) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        updateNextRefreshUI({ hidden: true });
+        return;
+      }
+
+      const overdue = !window.monitorAutoRefreshAt || Date.now() >= window.monitorAutoRefreshAt;
+      if (overdue) {
+        loadMonitorReport({ source: 'auto' });
+        window.monitorAutoRefreshAt = Date.now() + intervalMs;
+      }
+      updateNextRefreshUI();
+    });
+    window.monitorVisibilityBound = true;
+  }
+}
+
 async function loadMonitorReport({ source = 'auto' } = {}) {
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
@@ -501,10 +566,13 @@ async function load() {
     await loadMonitorReport();
 
     const refreshBtn = document.getElementById('monitor-refresh-btn');
-    refreshBtn?.addEventListener('click', () => loadMonitorReport({ source: 'manual' }));
+    refreshBtn?.addEventListener('click', async () => {
+      await loadMonitorReport({ source: 'manual' });
+      window.monitorAutoRefreshAt = Date.now() + 5 * 60_000;
+      updateNextRefreshUI();
+    });
 
-    if (window.monitorAutoRefreshTimer) clearInterval(window.monitorAutoRefreshTimer);
-    window.monitorAutoRefreshTimer = setInterval(() => loadMonitorReport({ source: 'auto' }), 5 * 60_000);
+    startMonitorAutoRefresh(5 * 60_000);
   } catch (err) {
     const statusEl = document.getElementById('threads-status');
     if (statusEl) statusEl.textContent = 'Cannot load dashboard data right now';
