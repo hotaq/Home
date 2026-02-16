@@ -5,6 +5,8 @@ import { spawnSync } from 'node:child_process';
 
 const targetUrl = process.env.TARGET_URL || 'https://hotaq.github.io/Home/';
 const monitorPath = process.env.MONITOR_FILE || 'web/monitor-latest.md';
+const dashboardDataPath = process.env.DASHBOARD_DATA_FILE || 'web/data.json';
+const canonicalContextId = String(process.env.CANONICAL_CONTEXT_ID || '3');
 const syntaxTargets = [
   'scripts/acp-bridge-core.mjs',
   'scripts/acp-bridge-smoke.mjs',
@@ -69,6 +71,38 @@ function checkMonitorData(file) {
   };
 }
 
+function checkCanonicalContextLock(dataFile, contextId) {
+  const abs = path.resolve(dataFile);
+  if (!fs.existsSync(abs)) {
+    return {
+      name: `canonical context lock ${dataFile}`,
+      ok: false,
+      detail: 'missing dashboard data file'
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(abs, 'utf8'));
+    const threads = Array.isArray(parsed.threads) ? parsed.threads : [];
+    const expected = `/issues/${contextId}`;
+    const hasCanonicalThread = threads.some((thread) => String(thread?.url || '').includes(expected));
+
+    return {
+      name: `canonical context lock ${dataFile}`,
+      ok: hasCanonicalThread,
+      detail: hasCanonicalThread
+        ? `ok (found ${expected} in threads)`
+        : `missing canonical thread ${expected}`
+    };
+  } catch (err) {
+    return {
+      name: `canonical context lock ${dataFile}`,
+      ok: false,
+      detail: `invalid json: ${String(err?.message || err)}`
+    };
+  }
+}
+
 function print(check) {
   console.log(`- ${check.ok ? 'OK' : 'FAIL'} | ${check.name} | ${check.detail}`);
 }
@@ -82,6 +116,7 @@ async function main() {
 
   checks.push(await checkHttp(targetUrl));
   checks.push(checkMonitorData(monitorPath));
+  checks.push(checkCanonicalContextLock(dashboardDataPath, canonicalContextId));
 
   console.log('Phase A smoke checks');
   for (const check of checks) print(check);

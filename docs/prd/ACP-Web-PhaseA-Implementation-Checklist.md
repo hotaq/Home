@@ -23,7 +23,7 @@ Canonical context: Issue #3
 - [x] log inbound/outbound แบบ traceable — `_internal.traceLog`
 
 ## D) Guardrails & Validation
-- [ ] ตรวจหาการหลุด canonical context
+- [x] ตรวจหาการหลุด canonical context — `scripts/phasea-smoke-checks.mjs` (`canonical context lock` check on `web/data.json`)
 - [x] ตรวจ false status claim (ห้าม report ok โดยไม่มี evidence) — `scripts/jin-loop-validate-th-report.mjs` (code 17)
 - [x] ตรวจ duplicate/no-op reports — `scripts/jin-loop-validate-th-report.mjs` (code 14,16)
 - [x] ทำ smoke checks (`node --check`, status HTTP, data presence) — `scripts/phasea-smoke-checks.mjs` + `npm run check:phasea-smoke`
