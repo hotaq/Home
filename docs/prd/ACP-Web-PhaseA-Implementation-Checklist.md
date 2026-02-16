@@ -13,8 +13,8 @@ Canonical context: Issue #3
 - [x] Panel แสดง latest message + status badge
 - [x] แสดง source (`manual/auto/cache`) + staleness
 - [x] เพิ่ม `last successful check` + `next refresh` — monitor report metadata (`Generated at`/`Last successful check`/`Next refresh`) + frontend parse/render
-- [ ] manual refresh พร้อม in-flight lock
-- [ ] fallback cache เมื่อ fetch fail
+- [x] manual refresh พร้อม in-flight lock — `loadMonitorReport()` ใช้ `state.inFlight` + `state.queuedManual` และปิดปุ่มระหว่างโหลด (`web/main.js`)
+- [x] fallback cache เมื่อ fetch fail — ใช้ `getCachedMonitorReport()`/`setCachedMonitorReport()` + แสดง `Monitor: loaded from local cache` (`web/main.js`)
 
 ## C) Bot Relay Inbound (Manual-first)
 - [x] กำหนด sender policy ต่อ bot แต่ละตัว — `senderPolicy` in `createBridgeHandlers()`

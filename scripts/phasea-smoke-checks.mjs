@@ -138,6 +138,9 @@ function checkMonitorUiContract(htmlFile = 'web/index.html', scriptFile = 'web/m
     'function getMonitorLoadState()',
     'state.inFlight',
     'state.queuedManual',
+    'getCachedMonitorReport()',
+    'setCachedMonitorReport({ text, fetchedAt })',
+    "statusEl.textContent = 'Monitor: loaded from local cache'",
     'renderMonitorLastSuccess(successEl'
   ];
 
