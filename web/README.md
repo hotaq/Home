@@ -24,3 +24,4 @@ python3 -m http.server 8080
 ## UX notes (mobile + status)
 - Agent roster แสดงเป็น badge สีตามสถานะ (active/paused/other) เพื่อสแกนเร็วขึ้น
 - บนจอเล็กจะเปลี่ยนเป็น single-column และเพิ่ม tap target ของ quick action ให้กดง่ายขึ้น
+- ส่วน Monitor มี staleness indicator (fresh/aging/stale) อัปเดตทุก 1 นาที เพื่อเห็นความสดของรายงานทันที

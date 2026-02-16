@@ -232,12 +232,28 @@ async function loadThreads(data) {
   openBadge.className = openCount > 0 ? 'badge badge-open' : 'badge badge-closed';
 }
 
+function formatFreshness(minutes) {
+  if (minutes < 1) return '<1m';
+  if (minutes < 60) return `${Math.floor(minutes)}m`;
+  return `${Math.floor(minutes / 60)}h`;
+}
+
+function updateMonitorFreshness(fetchedAt, freshnessEl) {
+  if (!fetchedAt || !freshnessEl) return;
+  const minutes = (Date.now() - fetchedAt) / 60000;
+  const freshness = formatFreshness(minutes);
+  const level = minutes > 30 ? 'stale' : minutes > 10 ? 'aging' : 'fresh';
+  freshnessEl.textContent = `staleness: ${freshness} (${level})`;
+  freshnessEl.className = minutes > 30 ? 'meta meta-critical' : minutes > 10 ? 'meta meta-warn' : 'meta';
+}
+
 async function loadMonitorReport() {
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
   const badgeEl = document.getElementById('monitor-badge');
+  const freshnessEl = document.getElementById('monitor-freshness');
 
-  if (!statusEl || !reportEl || !badgeEl) return;
+  if (!statusEl || !reportEl || !badgeEl || !freshnessEl) return;
 
   try {
     const res = await fetch(`./monitor-latest.md?v=${Date.now()}`, { cache: 'no-store' });
@@ -279,11 +295,20 @@ async function loadMonitorReport() {
       });
     }
 
+    const lastModifiedHeader = res.headers.get('last-modified');
+    const fetchedAt = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : Date.now();
+    updateMonitorFreshness(fetchedAt, freshnessEl);
+
+    if (window.monitorFreshnessTimer) clearInterval(window.monitorFreshnessTimer);
+    window.monitorFreshnessTimer = setInterval(() => updateMonitorFreshness(fetchedAt, freshnessEl), 60_000);
+
     statusEl.textContent = 'Monitor: loaded';
   } catch {
     statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
     badgeEl.textContent = 'unknown';
     badgeEl.className = 'badge badge-neutral';
+    freshnessEl.textContent = 'staleness: unknown';
+    freshnessEl.className = 'meta';
   }
 }
 

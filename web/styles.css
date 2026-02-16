@@ -51,6 +51,8 @@ pre{
 }
 li{margin:7px 0}
 .meta{color:var(--muted);font-size:.88em}
+.meta-warn{color:#ffd98a}
+.meta-critical{color:#ffaaaa}
 .meta-link{margin-left:8px;color:var(--muted);font-size:.86em}
 .status{margin:0 0 8px;color:var(--muted);font-size:.9em}
 .badge{
