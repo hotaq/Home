@@ -377,10 +377,11 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   const badgeEl = document.getElementById('monitor-badge');
   const freshnessEl = document.getElementById('monitor-freshness');
   const checkedEl = document.getElementById('monitor-last-check');
+  const sourceEl = document.getElementById('monitor-source');
   const refreshStatusEl = document.getElementById('monitor-refresh-status');
   const refreshBtn = document.getElementById('monitor-refresh-btn');
 
-  if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !refreshStatusEl) return;
+  if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !sourceEl || !refreshStatusEl) return;
 
   const state = getMonitorLoadState();
   if (state.inFlight) {
@@ -396,6 +397,8 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   if (refreshBtn) refreshBtn.disabled = true;
 
   const requestSeq = ++state.requestSeq;
+  sourceEl.textContent = `source: ${source} · loading…`;
+  sourceEl.className = 'meta';
   refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
   try {
@@ -449,13 +452,18 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     window.monitorFreshnessTimer = setInterval(() => updateMonitorFreshness(fetchedAt, freshnessEl), 60_000);
 
     statusEl.textContent = 'Monitor: loaded';
+    sourceEl.textContent = `source: ${source} · ok`;
+    sourceEl.className = 'meta';
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชแล้ว' : '';
-  } catch {
+  } catch (err) {
+    const reason = err instanceof Error && err.message ? err.message : 'unknown-error';
     statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
     badgeEl.textContent = 'unknown';
     badgeEl.className = 'badge badge-neutral';
     freshnessEl.textContent = 'staleness: unknown';
     freshnessEl.className = 'meta';
+    sourceEl.textContent = `source: ${source} · fail (${reason})`;
+    sourceEl.className = 'meta meta-warn';
     checkedEl.textContent = `checked: ${formatCheckedAt()}`;
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
   } finally {
