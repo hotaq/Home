@@ -24,8 +24,8 @@ Canonical context: Issue #3
 
 ## D) Guardrails & Validation
 - [ ] ตรวจหาการหลุด canonical context
-- [ ] ตรวจ false status claim (ห้าม report ok โดยไม่มี evidence)
-- [ ] ตรวจ duplicate/no-op reports
+- [x] ตรวจ false status claim (ห้าม report ok โดยไม่มี evidence) — `scripts/jin-loop-validate-th-report.mjs` (code 17)
+- [x] ตรวจ duplicate/no-op reports — `scripts/jin-loop-validate-th-report.mjs` (code 14,16)
 - [ ] ทำ smoke checks (`node --check`, status HTTP, data presence)
 
 ## E) Dry-run & Acceptance

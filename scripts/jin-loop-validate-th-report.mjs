@@ -94,6 +94,11 @@ if (uniqueBodies.size < lineBodies.length) {
   fail("เนื้อหาแต่ละบรรทัดห้ามซ้ำกัน (รวมกรณีเปลี่ยนแค่เว้นวรรค/เครื่องหมาย) เพื่อลดรายงานสแปมหรือ no-op", 14);
 }
 
+const line1NoOp = /(ไม่มี(การ)?เปลี่ยน|no\s*-?op|เหมือนเดิม|ไม่ได้ทำอะไร|ยังไม่ได้ทำ|n\/a|na)/i.test(lineBodies[0] || "");
+if (line1NoOp) {
+  fail("บรรทัด 'เปลี่ยน:' ห้ามเป็น no-op; ต้องระบุการเปลี่ยนจริงที่ตรวจสอบได้", 16);
+}
+
 if (opt.requireMeasurableLine2) {
   const line2 = lineBodies[1] || "";
   const hasMetricToken =
@@ -139,6 +144,13 @@ const hasTraceableProof = /(commit\s+[0-9a-f]{7,40}|\b[0-9a-f]{7,40}\b|https?:\/
 const hasExplicitBlocker = /(blocker|ติดบล็อก|blocked|local\s*เท่านั้น|push\s*ไม่ได้|auth|network|remote\s*reject)/i.test(
   evidenceLine
 );
+
+const statusClaimRegex = /\b(ok|pass(ed)?|success|healthy|green)\b|เรียบร้อย|สำเร็จ|ปกติ|ผ่าน/i;
+const hasStatusClaim = lineBodies.slice(0, 3).some((line) => statusClaimRegex.test(line));
+if (hasStatusClaim && !hasTraceableProof && !hasExplicitBlocker) {
+  fail("ห้ามเคลมสถานะว่า OK/ผ่าน/สำเร็จ โดยไม่มีหลักฐานตรวจสอบได้หรือ blocker ที่ชัดเจน", 17);
+}
+
 if (!hasTraceableProof && !hasExplicitBlocker) {
   fail("บรรทัดหลักฐานต้องมี commit/URL ที่ตรวจสอบได้ หรือระบุ blocker ชัดเจน", 9);
 }
