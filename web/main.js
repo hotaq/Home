@@ -358,6 +358,18 @@ function startMonitorAutoRefresh(intervalMs = 5 * 60_000) {
   }
 }
 
+function getMonitorLoadState() {
+  if (!window.monitorLoadState) {
+    window.monitorLoadState = {
+      inFlight: false,
+      queuedManual: false,
+      requestSeq: 0,
+      latestAppliedSeq: 0
+    };
+  }
+  return window.monitorLoadState;
+}
+
 async function loadMonitorReport({ source = 'auto' } = {}) {
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
@@ -368,12 +380,25 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
 
   if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !refreshStatusEl) return;
 
+  const state = getMonitorLoadState();
+  if (state.inFlight) {
+    if (source === 'manual') {
+      state.queuedManual = true;
+      refreshStatusEl.textContent = 'มีงานรีเฟรชอยู่แล้ว จะรีเฟรชซ้ำให้อัตโนมัติ…';
+    }
+    return;
+  }
+
+  state.inFlight = true;
+  const requestSeq = ++state.requestSeq;
   refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
   try {
     const res = await fetch(`./monitor-latest.md?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`monitor-http-${res.status}`);
     const text = await res.text();
+    if (requestSeq < state.latestAppliedSeq) return;
+    state.latestAppliedSeq = requestSeq;
     reportEl.textContent = text.trim() || '(empty monitor report)';
 
     const normalized = text.toLowerCase();
@@ -428,6 +453,12 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     freshnessEl.className = 'meta';
     checkedEl.textContent = `checked: ${formatCheckedAt()}`;
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
+  } finally {
+    state.inFlight = false;
+    if (state.queuedManual) {
+      state.queuedManual = false;
+      loadMonitorReport({ source: 'manual' });
+    }
   }
 }
 
