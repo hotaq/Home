@@ -103,6 +103,57 @@ function checkCanonicalContextLock(dataFile, contextId) {
   }
 }
 
+function checkMonitorUiContract(htmlFile = 'web/index.html', scriptFile = 'web/main.js') {
+  const htmlAbs = path.resolve(htmlFile);
+  const scriptAbs = path.resolve(scriptFile);
+
+  if (!fs.existsSync(htmlAbs)) {
+    return {
+      name: `monitor ui contract ${htmlFile}`,
+      ok: false,
+      detail: 'missing monitor html file'
+    };
+  }
+
+  if (!fs.existsSync(scriptAbs)) {
+    return {
+      name: `monitor ui contract ${scriptFile}`,
+      ok: false,
+      detail: 'missing monitor script file'
+    };
+  }
+
+  const html = fs.readFileSync(htmlAbs, 'utf8');
+  const script = fs.readFileSync(scriptAbs, 'utf8');
+
+  const htmlIds = [
+    'id="monitor-last-success"',
+    'id="monitor-next-refresh"',
+    'id="monitor-refresh-btn"',
+    'id="monitor-refresh-status"'
+  ];
+
+  const scriptGuards = [
+    'function updateNextRefreshUI(',
+    'function getMonitorLoadState()',
+    'state.inFlight',
+    'state.queuedManual',
+    'renderMonitorLastSuccess(successEl'
+  ];
+
+  const missingHtml = htmlIds.filter((token) => !html.includes(token));
+  const missingScript = scriptGuards.filter((token) => !script.includes(token));
+  const ok = missingHtml.length === 0 && missingScript.length === 0;
+
+  return {
+    name: `monitor ui contract ${htmlFile} + ${scriptFile}`,
+    ok,
+    detail: ok
+      ? 'ok (last-success/next-refresh/manual-lock hooks present)'
+      : `missing html=[${missingHtml.join(', ') || 'none'}] script=[${missingScript.join(', ') || 'none'}]`
+  };
+}
+
 function print(check) {
   console.log(`- ${check.ok ? 'OK' : 'FAIL'} | ${check.name} | ${check.detail}`);
 }
@@ -116,6 +167,7 @@ async function main() {
 
   checks.push(await checkHttp(targetUrl));
   checks.push(checkMonitorData(monitorPath));
+  checks.push(checkMonitorUiContract());
   checks.push(checkCanonicalContextLock(dashboardDataPath, canonicalContextId));
 
   console.log('Phase A smoke checks');
