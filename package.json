@@ -22,6 +22,7 @@
     "check:phaseb-controlled:round7": "node scripts/phaseb-controlled-rollout-round7.mjs",
     "check:phaseb-controlled:round8": "node scripts/phaseb-controlled-rollout-round8.mjs",
     "check:phaseb-controlled:round9": "node scripts/phaseb-controlled-rollout-round9.mjs",
+    "check:phaseb-controlled:round10": "node scripts/phaseb-controlled-rollout-round10.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
     "check:report-th": "node scripts/jin-loop-validate-th-report.mjs",
