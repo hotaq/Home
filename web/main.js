@@ -484,6 +484,37 @@ async function sha256Hex(input) {
   return [...new Uint8Array(hashBuffer)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+function createFocusTrap(container) {
+  if (!container) return () => {};
+
+  const onKeydown = (e) => {
+    if (e.key !== 'Tab') return;
+
+    const focusables = [...container.querySelectorAll(
+      'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])'
+    )].filter((el) => !el.hasAttribute('hidden'));
+
+    if (focusables.length === 0) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  container.addEventListener('keydown', onKeydown);
+  return () => container.removeEventListener('keydown', onKeydown);
+}
+
 async function setupAccessGate(data) {
   const gate = document.getElementById('auth-gate');
   const main = document.getElementById('app-main');
@@ -505,7 +536,10 @@ async function setupAccessGate(data) {
     return true;
   }
 
+  const releaseTrap = createFocusTrap(gate);
   main.style.filter = 'blur(2px)';
+  main.inert = true;
+  document.body.style.overflow = 'hidden';
   input?.focus();
 
   const attempt = async () => {
@@ -519,6 +553,9 @@ async function setupAccessGate(data) {
       localStorage.setItem('cult-auth-ok', hex);
       gate.style.display = 'none';
       main.style.filter = 'none';
+      main.inert = false;
+      document.body.style.overflow = '';
+      releaseTrap();
       location.reload();
       return;
     }

@@ -31,6 +31,7 @@ python3 -m http.server 8080
 - Hardening monitor refresh: กันรีเฟรชซ้อน (in-flight lock) และถ้ากด Manual ระหว่าง auto-refresh จะ queue ให้รันต่อทันทีหลังจบ เพื่อไม่ให้ผลรายงาน race กัน
 - ปรับปุ่ม Refresh ให้ disable อัตโนมัติระหว่างโหลด พร้อม `aria-busy` ที่ section monitor เพื่อให้ทั้งผู้ใช้และ screen reader รู้สถานะกำลังทำงาน
 - เพิ่ม accessibility ที่ด่านเข้าใช้งาน: มี skip link, label ชัดเจน, auto-focus ช่องกรอกรหัส, และข้อความ error แบบ aria-live
+- เพิ่ม focus trap ที่ access gate พร้อมล็อกการโฟกัสไว้ใน dialog และ freeze background (`inert` + lock scroll) ลดโอกาสคีย์บอร์ดหลุดไปกดองค์ประกอบด้านหลัง
 - Hardening ฝั่ง frontend: เปลี่ยนจุด render หลักจาก `innerHTML` เป็น DOM API (`textContent`/`createElement`) เพื่อลดความเสี่ยง script injection จากข้อมูล issue/data
 
 ## Governance guardrail (#3)
