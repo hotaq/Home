@@ -388,6 +388,16 @@ function renderMonitorLastSuccess(successEl, ts) {
   successEl.className = 'meta';
 }
 
+function extractLatestMessage(text = '') {
+  const firstLine = text
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+
+  if (!firstLine) return '--';
+  return firstLine.length > 120 ? `${firstLine.slice(0, 117)}...` : firstLine;
+}
+
 function renderIncidentLines(text = '') {
   const incidentEl = document.getElementById('incident-lines');
   if (!incidentEl) return;
@@ -496,10 +506,11 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   const checkedEl = document.getElementById('monitor-last-check');
   const successEl = document.getElementById('monitor-last-success');
   const sourceEl = document.getElementById('monitor-source');
+  const latestMessageEl = document.getElementById('monitor-latest-message');
   const refreshStatusEl = document.getElementById('monitor-refresh-status');
   const refreshBtn = document.getElementById('monitor-refresh-btn');
 
-  if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !sourceEl || !refreshStatusEl) return;
+  if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !sourceEl || !latestMessageEl || !refreshStatusEl) return;
 
   renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
 
@@ -517,7 +528,7 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   if (refreshBtn) refreshBtn.disabled = true;
 
   const requestSeq = ++state.requestSeq;
-  sourceEl.textContent = `source: ${source} · loading…`;
+  sourceEl.textContent = `source: ${source} · data: loading…`;
   sourceEl.className = 'meta';
   refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
@@ -560,8 +571,10 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     window.monitorFreshnessTimer = setInterval(() => updateMonitorFreshness(fetchedAt, freshnessEl), 60_000);
 
     statusEl.textContent = 'Monitor: loaded';
-    sourceEl.textContent = `source: ${source} · ok`;
+    sourceEl.textContent = `source: ${source} · data: live`;
     sourceEl.className = 'meta';
+    latestMessageEl.textContent = `latest: ${extractLatestMessage(text)}`;
+    latestMessageEl.className = 'meta';
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชแล้ว' : '';
   } catch (err) {
     const reason = err instanceof Error && err.message ? err.message : 'unknown-error';
@@ -576,8 +589,10 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       statusEl.textContent = 'Monitor: loaded from local cache';
       badgeEl.textContent = 'cached';
       badgeEl.className = 'badge badge-neutral';
-      sourceEl.textContent = `source: ${source} · cache (last fail: ${reason})`;
+      sourceEl.textContent = `source: ${source} · data: cache (last fail: ${reason})`;
       sourceEl.className = 'meta meta-warn';
+      latestMessageEl.textContent = `latest: ${extractLatestMessage(cached.text)}`;
+      latestMessageEl.className = 'meta';
       refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ (ใช้ข้อมูลล่าสุดจาก cache)' : '';
     } else {
       statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
@@ -585,8 +600,10 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       badgeEl.className = 'badge badge-neutral';
       freshnessEl.textContent = 'staleness: unknown';
       freshnessEl.className = 'meta';
-      sourceEl.textContent = `source: ${source} · fail (${reason})`;
+      sourceEl.textContent = `source: ${source} · data: none (fail: ${reason})`;
       sourceEl.className = 'meta meta-warn';
+      latestMessageEl.textContent = 'latest: --';
+      latestMessageEl.className = 'meta meta-warn';
       checkedEl.textContent = `checked: ${formatCheckedAt()}`;
       renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
       refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';

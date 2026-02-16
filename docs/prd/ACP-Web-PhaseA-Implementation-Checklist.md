@@ -10,8 +10,8 @@ Canonical context: Issue #3
 - [x] เพิ่ม error mapping (human-readable) — `mapBridgeError()`
 
 ## B) Website Monitor
-- [ ] Panel แสดง latest message + status badge
-- [ ] แสดง source (`manual/auto/cache`) + staleness
+- [x] Panel แสดง latest message + status badge
+- [x] แสดง source (`manual/auto/cache`) + staleness
 - [ ] เพิ่ม `last successful check` + `next refresh`
 - [ ] manual refresh พร้อม in-flight lock
 - [ ] fallback cache เมื่อ fetch fail
