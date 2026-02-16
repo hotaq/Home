@@ -4,10 +4,10 @@ Owner: Hootoo / Jin
 Canonical context: Issue #3
 
 ## A) Bridge Core (ACP)
-- [ ] สร้าง event envelope มาตรฐาน (`event_id`, `context_id`, `status`, `source`, `updated_at`)
-- [ ] ทำ handler `send/ack/error/retry`
-- [ ] เพิ่ม dedupe key + cooldown กัน event ซ้ำ
-- [ ] เพิ่ม error mapping (human-readable)
+- [x] สร้าง event envelope มาตรฐาน (`event_id`, `context_id`, `status`, `source`, `updated_at`) — `scripts/acp-bridge-core.mjs`
+- [x] ทำ handler `send/ack/error/retry` — `createBridgeHandlers()`
+- [x] เพิ่ม dedupe key + cooldown กัน event ซ้ำ — hash payload + cooldown window
+- [x] เพิ่ม error mapping (human-readable) — `mapBridgeError()`
 
 ## B) Website Monitor
 - [ ] Panel แสดง latest message + status badge
@@ -18,7 +18,7 @@ Canonical context: Issue #3
 
 ## C) Bot Relay Inbound (Manual-first)
 - [ ] กำหนด sender policy ต่อ bot แต่ละตัว
-- [ ] บังคับ context lock (#3)
+- [x] บังคับ context lock (#3) — `assertCanonicalContext()`
 - [ ] เพิ่ม rate-limit ต่อ sender
 - [ ] log inbound/outbound แบบ traceable
 

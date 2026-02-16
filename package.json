@@ -8,6 +8,7 @@
     "test:router": "node scripts/test-mention-router.mjs",
     "lint:thread": "node scripts/lint-thread-card.mjs",
     "monitor:web": "node scripts/web-monitor.mjs",
+    "check:acp-bridge": "node scripts/acp-bridge-smoke.mjs",
     "check:manifest": "node scripts/check-manifest.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
