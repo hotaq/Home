@@ -31,11 +31,11 @@ Canonical context: Issue #3
 ## E) Dry-run & Acceptance
 - [x] Dry-run รอบที่ 1: system-level checks — `npm run check:phasea-dryrun1` + `docs/prd/evidence/phasea-dryrun-round1.md`
 - [x] Dry-run รอบที่ 2: interactive checks — `npm run check:phasea-dryrun2` + `docs/prd/evidence/phasea-dryrun-round2.md`
-- [ ] บันทึกผลลง Issue #3 เป็น Closure Card
+- [x] บันทึกผลลง Issue #3 เป็น Closure Card — updated continuously on #3 + this run posts Phase A exit check closure
 - [x] สรุป KPI เริ่มต้น (duplicate/noise, stale handling, recovery time) — `npm run check:phasea-kpi` + `docs/prd/evidence/phasea-kpi-baseline.md`
 
 ## Exit Criteria (Phase A)
-- [ ] ไม่มี duplicate report ที่สำคัญ
-- [ ] false claim = 0
-- [ ] monitor แสดง source+age ครบ
-- [ ] owner เห็นสถานะ ACP บนเว็บได้สม่ำเสมอ
+- [x] ไม่มี duplicate report ที่สำคัญ — `docs/prd/evidence/phasea-exit-check.md` (PASS)
+- [x] false claim = 0 — `docs/prd/evidence/phasea-exit-check.md` (PASS)
+- [x] monitor แสดง source+age ครบ — `docs/prd/evidence/phasea-exit-check.md` (PASS)
+- [x] owner เห็นสถานะ ACP บนเว็บได้สม่ำเสมอ — `docs/prd/evidence/phasea-exit-check.md` (PASS)
