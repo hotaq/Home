@@ -185,6 +185,22 @@ function formatUpdatedAt(iso) {
   return d.toLocaleString('th-TH', { hour12: false });
 }
 
+function createExternalLink({ href, text }) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = text;
+  return link;
+}
+
+function appendMetaText(parent, text, className = 'meta') {
+  const span = document.createElement('span');
+  span.className = className;
+  span.textContent = text;
+  parent.appendChild(span);
+}
+
 function renderThreadItem(threadsEl, thread, result) {
   const li = document.createElement('li');
 
@@ -194,17 +210,21 @@ function renderThreadItem(threadsEl, thread, result) {
     const sourceText =
       result.source === 'cache' ? `cached ${formatCacheAge(result.cachedAt)}` : 'live';
 
-    li.innerHTML = `
-      <a href="${thread.url}" target="_blank" rel="noopener">#${issueMeta.number} ${issueMeta.title}</a>
-      <span class="meta">(${issueMeta.repo})</span>
-      <span class="badge ${stateClass}">${issueMeta.state}</span>
-      <span class="meta">· ${sourceText}</span>
-      <span class="meta">· 💬 ${issueMeta.comments ?? 0}</span>
-      <span class="meta">· updated ${formatUpdatedAt(issueMeta.updatedAt)}</span>
-    `;
+    li.appendChild(createExternalLink({ href: thread.url, text: `#${issueMeta.number} ${issueMeta.title}` }));
+    appendMetaText(li, ` (${issueMeta.repo})`);
+
+    const badge = document.createElement('span');
+    badge.className = `badge ${stateClass}`;
+    badge.textContent = issueMeta.state;
+    li.appendChild(badge);
+
+    appendMetaText(li, ` · ${sourceText}`);
+    appendMetaText(li, ` · 💬 ${issueMeta.comments ?? 0}`);
+    appendMetaText(li, ` · updated ${formatUpdatedAt(issueMeta.updatedAt)}`);
   } else {
     const reason = result?.reason ? ` · ${result.reason}` : '';
-    li.innerHTML = `<a href="${thread.url}" target="_blank" rel="noopener">${thread.name}</a> <span class="meta">(fallback${reason})</span>`;
+    li.appendChild(createExternalLink({ href: thread.url, text: thread.name }));
+    appendMetaText(li, ` (fallback${reason})`);
   }
 
   threadsEl.appendChild(li);
@@ -415,22 +435,29 @@ async function load() {
 
     const decisionEl = document.getElementById('decision');
     if (decisionEl) {
-      decisionEl.innerHTML = `
-        <strong>${data.decision.title}</strong><br/>
-        Owner: ${data.decision.owner}<br/>
-        Due: ${data.decision.due}
-      `;
+      decisionEl.replaceChildren();
+      const title = document.createElement('strong');
+      title.textContent = data.decision.title;
+      decisionEl.appendChild(title);
+      decisionEl.appendChild(document.createElement('br'));
+      decisionEl.append(`Owner: ${data.decision.owner}`);
+      decisionEl.appendChild(document.createElement('br'));
+      decisionEl.append(`Due: ${data.decision.due}`);
     }
 
     if (data.nextAction) {
       const nextActionEl = document.getElementById('next-action');
       if (nextActionEl) {
-        nextActionEl.innerHTML = `
-          <strong>${data.nextAction.task}</strong><br/>
-          Owner: ${data.nextAction.owner}<br/>
-          Due: ${data.nextAction.due}<br/>
-          <a href="${data.nextAction.link}" target="_blank" rel="noopener">open thread</a>
-        `;
+        nextActionEl.replaceChildren();
+        const task = document.createElement('strong');
+        task.textContent = data.nextAction.task;
+        nextActionEl.appendChild(task);
+        nextActionEl.appendChild(document.createElement('br'));
+        nextActionEl.append(`Owner: ${data.nextAction.owner}`);
+        nextActionEl.appendChild(document.createElement('br'));
+        nextActionEl.append(`Due: ${data.nextAction.due}`);
+        nextActionEl.appendChild(document.createElement('br'));
+        nextActionEl.appendChild(createExternalLink({ href: data.nextAction.link, text: 'open thread' }));
       }
     }
 
@@ -442,10 +469,15 @@ async function load() {
       data.roster.forEach((r) => {
         const li = document.createElement('li');
         li.className = 'roster-item';
-        li.innerHTML = `
-          <span>${r.name} — ${r.role}</span>
-          <span class="badge ${statusClassFromText(r.status)}">${r.status}</span>
-        `;
+
+        const profile = document.createElement('span');
+        profile.textContent = `${r.name} — ${r.role}`;
+
+        const badge = document.createElement('span');
+        badge.className = `badge ${statusClassFromText(r.status)}`;
+        badge.textContent = r.status;
+
+        li.append(profile, badge);
         roster.appendChild(li);
       });
     }
