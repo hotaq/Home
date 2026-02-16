@@ -22,6 +22,7 @@ Canonical context: Issue #3
 - [x] รันรอบควบคุมเพิ่ม (lockcheck-only + tight retry cap) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round5.md`
 - [x] รันรอบควบคุมเพิ่ม (alice canary + capped 2-step retry) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round6.md`
 - [x] รันรอบควบคุมเพิ่ม (bob canary + capped 3-step retry) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round7.md`
+- [x] รันรอบควบคุมเพิ่ม (policy-first tightening + capped 1500ms retry) และบันทึกที่ `docs/prd/evidence/phaseb-controlled-rollout-round8.md`
 
 ## B4) Context Lock + Safety
 - [x] คง canonical context lock #3 ในทุก flow
