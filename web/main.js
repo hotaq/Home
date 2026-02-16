@@ -269,13 +269,21 @@ function updateMonitorFreshness(fetchedAt, freshnessEl) {
   freshnessEl.className = minutes > 30 ? 'meta meta-critical' : minutes > 10 ? 'meta meta-warn' : 'meta';
 }
 
-async function loadMonitorReport() {
+function formatCheckedAt(ts = Date.now()) {
+  return new Date(ts).toLocaleTimeString('th-TH', { hour12: false });
+}
+
+async function loadMonitorReport({ source = 'auto' } = {}) {
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
   const badgeEl = document.getElementById('monitor-badge');
   const freshnessEl = document.getElementById('monitor-freshness');
+  const checkedEl = document.getElementById('monitor-last-check');
+  const refreshStatusEl = document.getElementById('monitor-refresh-status');
 
-  if (!statusEl || !reportEl || !badgeEl || !freshnessEl) return;
+  if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !refreshStatusEl) return;
+
+  refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
   try {
     const res = await fetch(`./monitor-latest.md?v=${Date.now()}`, { cache: 'no-store' });
@@ -320,17 +328,21 @@ async function loadMonitorReport() {
     const lastModifiedHeader = res.headers.get('last-modified');
     const fetchedAt = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : Date.now();
     updateMonitorFreshness(fetchedAt, freshnessEl);
+    checkedEl.textContent = `checked: ${formatCheckedAt()}`;
 
     if (window.monitorFreshnessTimer) clearInterval(window.monitorFreshnessTimer);
     window.monitorFreshnessTimer = setInterval(() => updateMonitorFreshness(fetchedAt, freshnessEl), 60_000);
 
     statusEl.textContent = 'Monitor: loaded';
+    refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชแล้ว' : '';
   } catch {
     statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
     badgeEl.textContent = 'unknown';
     badgeEl.className = 'badge badge-neutral';
     freshnessEl.textContent = 'staleness: unknown';
     freshnessEl.className = 'meta';
+    checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+    refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
   }
 }
 
@@ -455,6 +467,12 @@ async function load() {
     }
 
     await loadMonitorReport();
+
+    const refreshBtn = document.getElementById('monitor-refresh-btn');
+    refreshBtn?.addEventListener('click', () => loadMonitorReport({ source: 'manual' }));
+
+    if (window.monitorAutoRefreshTimer) clearInterval(window.monitorAutoRefreshTimer);
+    window.monitorAutoRefreshTimer = setInterval(() => loadMonitorReport({ source: 'auto' }), 5 * 60_000);
   } catch (err) {
     const statusEl = document.getElementById('threads-status');
     if (statusEl) statusEl.textContent = 'Cannot load dashboard data right now';

@@ -78,8 +78,13 @@
       <p>
         <span id="monitor-badge" class="badge badge-neutral">unknown</span>
         <span id="monitor-freshness" class="meta">staleness: --</span>
+        <span id="monitor-last-check" class="meta">checked: --</span>
         <a class="meta-link" href="https://github.com/hotaq/Home/actions/workflows/web-mvp-monitor.yml" target="_blank" rel="noopener">open monitor runs</a>
       </p>
+      <div class="monitor-actions">
+        <button id="monitor-refresh-btn" class="quick-btn" type="button" aria-label="รีเฟรชรายงาน monitor ตอนนี้">Refresh monitor now</button>
+        <span id="monitor-refresh-status" class="status" aria-live="polite"></span>
+      </div>
       <pre id="monitor-report">(no report yet)</pre>
       <h3>Incident lines</h3>
       <ul id="incident-lines"></ul>

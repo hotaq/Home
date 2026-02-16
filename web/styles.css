@@ -107,6 +107,9 @@ li{margin:7px 0}
 .quick-btn:hover{border-color:#4d6ea8;background:#132447;transform:translateY(-1px)}
 .quick-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
+.monitor-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 10px}
+.monitor-actions .status{margin:0}
+
 footer{border-top:1px solid var(--border);border-bottom:none}
 
 .gate{position:fixed;inset:0;background:rgba(5,9,18,.88);display:flex;align-items:center;justify-content:center;z-index:9999}
@@ -121,4 +124,5 @@ footer{border-top:1px solid var(--border);border-bottom:none}
   .card{padding:12px}
   .quick-actions{display:grid;grid-template-columns:1fr 1fr}
   .quick-btn{text-align:center}
+  .monitor-actions{display:grid;grid-template-columns:1fr}
 }
