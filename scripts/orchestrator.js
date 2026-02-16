@@ -34,20 +34,56 @@ function escapeRegExp(text) {
 
 const CANONICAL_CONTEXT_ID = "issue-3";
 
-function withAuditFooter({ body, actorId, routerDecision, dedupeKey }) {
-  const runId = process.env.GITHUB_RUN_ID || "local";
-  const actor = process.env.GITHUB_ACTOR || "unknown";
+const DEFAULT_EVENT_SOURCE = "auto";
+
+function createEventEnvelope({
+  issueNumber,
+  actorId,
+  status = "send",
+  source = DEFAULT_EVENT_SOURCE,
+  runId = process.env.GITHUB_RUN_ID || "local",
+  sourceActor = process.env.GITHUB_ACTOR || "unknown",
+}) {
   const updatedAt = new Date().toISOString();
-  const issueNumber = Number(process.env.ISSUE_NUMBER || 0);
-  const contextId = issueNumber ? `issue-${issueNumber}` : "issue-unknown";
+  const contextId = Number(issueNumber) ? `issue-${Number(issueNumber)}` : "issue-unknown";
   const eventId = `${runId}:${actorId}:${Date.now()}`;
 
-  let footer = `---\nactor: ${actorId}\nsource: ${actor}\nrun-id: ${runId}\nts: ${updatedAt}`;
-  footer += `\nevent_id: ${eventId}`;
-  footer += `\ncontext_id: ${contextId}`;
-  footer += `\nstatus: send`;
-  footer += `\nsource_type: auto`;
-  footer += `\nupdated_at: ${updatedAt}`;
+  return {
+    event_id: eventId,
+    context_id: contextId,
+    status,
+    source,
+    updated_at: updatedAt,
+    run_id: runId,
+    source_actor: sourceActor,
+  };
+}
+
+function mapGitHubErrorToHuman(err) {
+  const status = Number(err?.status || 0);
+  const msg = String(err?.message || "").toLowerCase();
+
+  if (status === 401 || status === 403) return "สิทธิ์ไม่พอสำหรับโพสต์คอมเมนต์ (auth/permission)";
+  if (status === 404) return "ไม่พบ issue/repo ที่ต้องการโพสต์";
+  if (status === 422) return "GitHub ปฏิเสธเนื้อหา (validation failed)";
+  if (status === 429 || msg.includes("rate limit")) return "ชน rate limit ของ GitHub";
+  if (status >= 500) return "GitHub ฝั่งเซิร์ฟเวอร์มีปัญหาชั่วคราว";
+  return "โพสต์คอมเมนต์ไม่สำเร็จ (unknown github api error)";
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function withAuditFooter({ body, actorId, routerDecision, dedupeKey, issueNumber, status = "send", source = DEFAULT_EVENT_SOURCE }) {
+  const envelope = createEventEnvelope({ issueNumber, actorId, status, source });
+
+  let footer = `---\nactor: ${actorId}\nsource: ${envelope.source_actor}\nrun-id: ${envelope.run_id}\nts: ${envelope.updated_at}`;
+  footer += `\nevent_id: ${envelope.event_id}`;
+  footer += `\ncontext_id: ${envelope.context_id}`;
+  footer += `\nstatus: ${envelope.status}`;
+  footer += `\nsource_type: ${envelope.source}`;
+  footer += `\nupdated_at: ${envelope.updated_at}`;
 
   if (routerDecision) {
     footer += `\nrouter: ${routerDecision}`;
@@ -368,6 +404,8 @@ async function postComment({
   body,
   routerDecision,
   dedupeKey,
+  status = "send",
+  source = DEFAULT_EVENT_SOURCE,
 }) {
   if (dedupeKey) {
     const duplicated = await hasDedupeComment({
@@ -383,13 +421,48 @@ async function postComment({
     }
   }
 
-  const auditedReply = withAuditFooter({ body, actorId, routerDecision, dedupeKey });
-  return octokit.issues.createComment({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    body: auditedReply,
+  const auditedReply = withAuditFooter({
+    body,
+    actorId,
+    routerDecision,
+    dedupeKey,
+    issueNumber,
+    status,
+    source,
   });
+
+  try {
+    return await octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      body: auditedReply,
+    });
+  } catch (err) {
+    const humanError = mapGitHubErrorToHuman(err);
+    console.error(`Post failed (${actorId}): ${humanError}`);
+
+    const shouldRetry = Number(err?.status || 0) >= 500 || Number(err?.status || 0) === 429;
+    if (!shouldRetry) throw err;
+
+    console.log(`Retry once for ${actorId} in 1200ms...`);
+    await sleep(1200);
+
+    return octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      body: withAuditFooter({
+        body,
+        actorId,
+        routerDecision: routerDecision ? `${routerDecision} (retry)` : "retry",
+        dedupeKey,
+        issueNumber,
+        status: "retry",
+        source,
+      }),
+    });
+  }
 }
 
 async function main() {
