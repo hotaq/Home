@@ -16,6 +16,8 @@ function run() {
       windowMs: 10_000,
       maxEvents: 2
     },
+    dedupeMaxKeys: 2,
+    senderMaxTracked: 2,
     now: () => nowMs
   });
 
@@ -101,6 +103,16 @@ function run() {
     contextGuardOk = String(err.message || '').includes('context-lock-violation');
   }
   assert(contextGuardOk, 'context lock should reject non-canonical context id');
+
+  nowMs += 6_000;
+  handlers.send({ contextId: '3', source: 'manual', payload: { text: 'dedupe-1' } });
+  nowMs += 6_000;
+  handlers.send({ contextId: '3', source: 'manual', payload: { text: 'dedupe-2' } });
+  nowMs += 6_000;
+  handlers.send({ contextId: '3', source: 'manual', payload: { text: 'dedupe-3' } });
+
+  const stats = handlers._internal.stats();
+  assert(stats.seenKeys <= 2, 'dedupe key store should be pruned to configured max');
 
   assert(handlers._internal.traceLog.length >= 4, 'trace log should capture inbound/outbound events');
 

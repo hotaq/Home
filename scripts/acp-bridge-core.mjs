@@ -3,6 +3,8 @@ import crypto from 'node:crypto';
 const DEFAULT_COOLDOWN_MS = 30_000;
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_RATE_LIMIT_MAX_EVENTS = 20;
+const DEFAULT_DEDUPE_MAX_KEYS = 5_000;
+const DEFAULT_SENDER_MAX_TRACKED = 1_000;
 const CANONICAL_CONTEXT_ID = '3';
 
 export function mapBridgeError(err) {
@@ -70,6 +72,8 @@ export function createBridgeHandlers({
   canonicalContextId = CANONICAL_CONTEXT_ID,
   senderPolicy = {},
   inboundRateLimit = {},
+  dedupeMaxKeys = DEFAULT_DEDUPE_MAX_KEYS,
+  senderMaxTracked = DEFAULT_SENDER_MAX_TRACKED,
   now = Date.now
 } = {}) {
   const seenByKey = new Map();
@@ -82,6 +86,30 @@ export function createBridgeHandlers({
   const rateLimitMaxEvents = Number(inboundRateLimit.maxEvents) > 0
     ? Number(inboundRateLimit.maxEvents)
     : DEFAULT_RATE_LIMIT_MAX_EVENTS;
+  const dedupeMax = Number(dedupeMaxKeys) > 0 ? Number(dedupeMaxKeys) : DEFAULT_DEDUPE_MAX_KEYS;
+  const senderTrackMax = Number(senderMaxTracked) > 0 ? Number(senderMaxTracked) : DEFAULT_SENDER_MAX_TRACKED;
+
+  function pruneSeenKeys() {
+    while (seenByKey.size > dedupeMax) {
+      const oldestKey = seenByKey.keys().next().value;
+      if (!oldestKey) break;
+      seenByKey.delete(oldestKey);
+    }
+  }
+
+  function pruneSenderWindow(windowStart) {
+    for (const [key, timestamps] of senderWindow.entries()) {
+      const kept = timestamps.filter((ts) => ts >= windowStart);
+      if (kept.length === 0) senderWindow.delete(key);
+      else senderWindow.set(key, kept);
+    }
+
+    while (senderWindow.size > senderTrackMax) {
+      const oldestSender = senderWindow.keys().next().value;
+      if (!oldestSender) break;
+      senderWindow.delete(oldestSender);
+    }
+  }
 
   function dedupeKey({ contextId, source, status, payload }) {
     return `${contextId}::${source}::${status}::${stablePayloadHash(payload)}`;
@@ -93,7 +121,11 @@ export function createBridgeHandlers({
     const elapsed = currentMs - lastMs;
     const duplicate = elapsed >= 0 && elapsed < cooldownMs;
 
-    if (!duplicate) seenByKey.set(key, currentMs);
+    if (!duplicate) {
+      if (seenByKey.has(key)) seenByKey.delete(key);
+      seenByKey.set(key, currentMs);
+      pruneSeenKeys();
+    }
 
     return { duplicate, elapsedMs: elapsed };
   }
@@ -117,9 +149,13 @@ export function createBridgeHandlers({
     const nowMs = now();
     const windowStart = nowMs - rateLimitWindowMs;
 
+    pruneSenderWindow(windowStart);
+
     const kept = (senderWindow.get(senderKey) || []).filter((ts) => ts >= windowStart);
     kept.push(nowMs);
+    if (senderWindow.has(senderKey)) senderWindow.delete(senderKey);
     senderWindow.set(senderKey, kept);
+    pruneSenderWindow(windowStart);
 
     return {
       limited: kept.length > rateLimitMaxEvents,
@@ -217,7 +253,16 @@ export function createBridgeHandlers({
       seenByKey,
       traceLog,
       senderWindow,
-      guardInbound
+      guardInbound,
+      stats: () => ({
+        seenKeys: seenByKey.size,
+        trackedSenders: senderWindow.size,
+        traceEntries: traceLog.length,
+        dedupeMax,
+        senderTrackMax,
+        rateLimitWindowMs,
+        rateLimitMaxEvents
+      })
     }
   };
 }
