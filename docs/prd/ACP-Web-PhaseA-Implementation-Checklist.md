@@ -17,10 +17,10 @@ Canonical context: Issue #3
 - [ ] fallback cache เมื่อ fetch fail
 
 ## C) Bot Relay Inbound (Manual-first)
-- [ ] กำหนด sender policy ต่อ bot แต่ละตัว
+- [x] กำหนด sender policy ต่อ bot แต่ละตัว — `senderPolicy` in `createBridgeHandlers()`
 - [x] บังคับ context lock (#3) — `assertCanonicalContext()`
-- [ ] เพิ่ม rate-limit ต่อ sender
-- [ ] log inbound/outbound แบบ traceable
+- [x] เพิ่ม rate-limit ต่อ sender — `inboundRateLimit` in `createBridgeHandlers()`
+- [x] log inbound/outbound แบบ traceable — `_internal.traceLog`
 
 ## D) Guardrails & Validation
 - [ ] ตรวจหาการหลุด canonical context

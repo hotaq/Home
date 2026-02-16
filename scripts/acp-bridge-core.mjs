@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 
 const DEFAULT_COOLDOWN_MS = 30_000;
+const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
+const DEFAULT_RATE_LIMIT_MAX_EVENTS = 20;
 const CANONICAL_CONTEXT_ID = '3';
 
 export function mapBridgeError(err) {
@@ -66,9 +68,20 @@ export function assertCanonicalContext(contextId, canonicalContextId = CANONICAL
 export function createBridgeHandlers({
   cooldownMs = DEFAULT_COOLDOWN_MS,
   canonicalContextId = CANONICAL_CONTEXT_ID,
+  senderPolicy = {},
+  inboundRateLimit = {},
   now = Date.now
 } = {}) {
   const seenByKey = new Map();
+  const traceLog = [];
+  const senderWindow = new Map();
+
+  const rateLimitWindowMs = Number(inboundRateLimit.windowMs) > 0
+    ? Number(inboundRateLimit.windowMs)
+    : DEFAULT_RATE_LIMIT_WINDOW_MS;
+  const rateLimitMaxEvents = Number(inboundRateLimit.maxEvents) > 0
+    ? Number(inboundRateLimit.maxEvents)
+    : DEFAULT_RATE_LIMIT_MAX_EVENTS;
 
   function dedupeKey({ contextId, source, status, payload }) {
     return `${contextId}::${source}::${status}::${stablePayloadHash(payload)}`;
@@ -85,6 +98,42 @@ export function createBridgeHandlers({
     return { duplicate, elapsedMs: elapsed };
   }
 
+  function checkSenderAllowed({ senderId, botId }) {
+    if (!botId || !senderId) return;
+
+    const allowed = senderPolicy[String(botId)];
+    if (!allowed || allowed === '*') return;
+
+    const allowedList = Array.isArray(allowed) ? allowed.map(String) : [String(allowed)];
+    if (!allowedList.includes(String(senderId))) {
+      throw new Error(`sender-policy-violation: sender=${senderId} bot=${botId}`);
+    }
+  }
+
+  function checkSenderRateLimit(senderId) {
+    if (!senderId) return { limited: false, count: 0, windowMs: rateLimitWindowMs };
+
+    const senderKey = String(senderId);
+    const nowMs = now();
+    const windowStart = nowMs - rateLimitWindowMs;
+
+    const kept = (senderWindow.get(senderKey) || []).filter((ts) => ts >= windowStart);
+    kept.push(nowMs);
+    senderWindow.set(senderKey, kept);
+
+    return {
+      limited: kept.length > rateLimitMaxEvents,
+      count: kept.length,
+      maxEvents: rateLimitMaxEvents,
+      windowMs: rateLimitWindowMs
+    };
+  }
+
+  function appendTrace(entry) {
+    traceLog.push({ ...entry, ts: isoNow(now) });
+    if (traceLog.length > 500) traceLog.shift();
+  }
+
   function buildEnvelope({ contextId, source, status, payload, meta }) {
     assertCanonicalContext(contextId, canonicalContextId);
     return createEventEnvelope({
@@ -97,19 +146,32 @@ export function createBridgeHandlers({
     });
   }
 
+  function guardInbound({ senderId, botId }) {
+    checkSenderAllowed({ senderId, botId });
+    const rate = checkSenderRateLimit(senderId);
+    if (rate.limited) {
+      throw new Error(`sender-rate-limited: sender=${senderId} count=${rate.count}/${rate.maxEvents} window=${rate.windowMs}`);
+    }
+    return rate;
+  }
+
   function send({ contextId, source = 'manual', payload, meta }) {
     const envelope = buildEnvelope({ contextId, source, status: 'send', payload, meta });
     const key = dedupeKey({ contextId, source, status: 'send', payload });
     const dedupe = checkDuplicate(key);
+    appendTrace({ direction: 'outbound', status: 'send', contextId: String(contextId), source, ok: !dedupe.duplicate });
     return { ok: !dedupe.duplicate, envelope, dedupe };
   }
 
-  function ack({ contextId, source = 'bot-relay', payload, meta }) {
-    const envelope = buildEnvelope({ contextId, source, status: 'ack', payload, meta });
-    return { ok: true, envelope };
+  function ack({ contextId, source = 'bot-relay', senderId, botId, payload, meta }) {
+    const rate = guardInbound({ senderId, botId });
+    const envelope = buildEnvelope({ contextId, source, status: 'ack', payload, meta: { ...meta, sender_id: senderId, bot_id: botId } });
+    appendTrace({ direction: 'inbound', status: 'ack', contextId: String(contextId), source, senderId, botId, ok: true, rateCount: rate.count ?? 0 });
+    return { ok: true, envelope, rateLimit: rate };
   }
 
-  function error({ contextId, source = 'bot-relay', error: err, payload, meta }) {
+  function error({ contextId, source = 'bot-relay', senderId, botId, error: err, payload, meta }) {
+    const rate = guardInbound({ senderId, botId });
     const mappedError = mapBridgeError(err);
     const envelope = buildEnvelope({
       contextId,
@@ -120,12 +182,14 @@ export function createBridgeHandlers({
         mapped_error: mappedError,
         raw_error: String(err?.message || err || 'unknown')
       },
-      meta
+      meta: { ...meta, sender_id: senderId, bot_id: botId }
     });
-    return { ok: true, envelope, mappedError };
+    appendTrace({ direction: 'inbound', status: 'error', contextId: String(contextId), source, senderId, botId, ok: true, mappedError, rateCount: rate.count ?? 0 });
+    return { ok: true, envelope, mappedError, rateLimit: rate };
   }
 
-  function retry({ contextId, source = 'bot-relay', attempt = 1, payload, meta }) {
+  function retry({ contextId, source = 'bot-relay', senderId, botId, attempt = 1, payload, meta }) {
+    const rate = guardInbound({ senderId, botId });
     const envelope = buildEnvelope({
       contextId,
       source,
@@ -134,12 +198,13 @@ export function createBridgeHandlers({
         attempt,
         ...payload
       },
-      meta
+      meta: { ...meta, sender_id: senderId, bot_id: botId }
     });
 
     const key = dedupeKey({ contextId, source, status: 'retry', payload: envelope.payload });
     const dedupe = checkDuplicate(key);
-    return { ok: !dedupe.duplicate, envelope, dedupe };
+    appendTrace({ direction: 'inbound', status: 'retry', contextId: String(contextId), source, senderId, botId, ok: !dedupe.duplicate, rateCount: rate.count ?? 0 });
+    return { ok: !dedupe.duplicate, envelope, dedupe, rateLimit: rate };
   }
 
   return {
@@ -149,7 +214,10 @@ export function createBridgeHandlers({
     retry,
     _internal: {
       dedupeKey,
-      seenByKey
+      seenByKey,
+      traceLog,
+      senderWindow,
+      guardInbound
     }
   };
 }
