@@ -32,7 +32,7 @@ Canonical context: Issue #3
 - [x] Dry-run รอบที่ 1: system-level checks — `npm run check:phasea-dryrun1` + `docs/prd/evidence/phasea-dryrun-round1.md`
 - [x] Dry-run รอบที่ 2: interactive checks — `npm run check:phasea-dryrun2` + `docs/prd/evidence/phasea-dryrun-round2.md`
 - [ ] บันทึกผลลง Issue #3 เป็น Closure Card
-- [ ] สรุป KPI เริ่มต้น (duplicate/noise, stale handling, recovery time)
+- [x] สรุป KPI เริ่มต้น (duplicate/noise, stale handling, recovery time) — `npm run check:phasea-kpi` + `docs/prd/evidence/phasea-kpi-baseline.md`
 
 ## Exit Criteria (Phase A)
 - [ ] ไม่มี duplicate report ที่สำคัญ

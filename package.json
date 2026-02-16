@@ -13,6 +13,7 @@
     "check:phasea-smoke": "node scripts/phasea-smoke-checks.mjs",
     "check:phasea-dryrun1": "node scripts/phasea-dryrun-round1.mjs",
     "check:phasea-dryrun2": "node scripts/phasea-dryrun-round2.mjs",
+    "check:phasea-kpi": "node scripts/phasea-kpi-baseline.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
     "check:report-th": "node scripts/jin-loop-validate-th-report.mjs",
