@@ -9,6 +9,20 @@
 }
 
 *{box-sizing:border-box}
+.skip-link{
+  position:absolute;
+  left:12px;
+  top:-44px;
+  padding:8px 12px;
+  border-radius:8px;
+  background:#0f1a31;
+  border:1px solid #4d6ea8;
+  color:var(--text);
+  z-index:10000;
+  transition:top .16s ease;
+}
+.skip-link:focus-visible{top:10px;outline:2px solid var(--accent);outline-offset:2px}
+
 body{
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   background: radial-gradient(1200px 700px at 10% -10%, #1a2d55 0%, transparent 50%), var(--bg);
@@ -98,7 +112,8 @@ footer{border-top:1px solid var(--border);border-bottom:none}
 .gate{position:fixed;inset:0;background:rgba(5,9,18,.88);display:flex;align-items:center;justify-content:center;z-index:9999}
 .gate-card{width:min(420px,92vw);background:linear-gradient(180deg,var(--surface) 0%, var(--surface-2) 100%);border:1px solid var(--border);border-radius:14px;padding:16px}
 .gate-card h2{margin:0 0 8px}
-.gate-card input{width:100%;padding:10px;border-radius:10px;border:1px solid #30466f;background:#0f1a31;color:var(--text);margin:8px 0 10px}
+.field-label{display:block;font-size:.86em;color:var(--muted);margin:8px 0 4px}
+.gate-card input{width:100%;padding:10px;border-radius:10px;border:1px solid #30466f;background:#0f1a31;color:var(--text);margin:0 0 10px}
 
 @media (max-width:720px){
   header,footer{padding:14px 16px}

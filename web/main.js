@@ -362,10 +362,14 @@ async function setupAccessGate(data) {
   }
 
   main.style.filter = 'blur(2px)';
+  input?.focus();
 
   const attempt = async () => {
     const value = (input?.value || '').trim();
-    if (!value) return;
+    if (!value) {
+      if (err) err.textContent = 'Please enter access key';
+      return;
+    }
     const hex = await sha256Hex(value);
     if (hex === data.access.passwordHash) {
       localStorage.setItem('cult-auth-ok', hex);
@@ -378,6 +382,9 @@ async function setupAccessGate(data) {
   };
 
   btn?.addEventListener('click', attempt);
+  input?.addEventListener('input', () => {
+    if (err?.textContent) err.textContent = '';
+  });
   input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') attempt();
   });
