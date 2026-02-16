@@ -398,6 +398,30 @@ function extractLatestMessage(text = '') {
   return firstLine.length > 120 ? `${firstLine.slice(0, 117)}...` : firstLine;
 }
 
+function parseMonitorMetadata(text = '') {
+  const lines = text.split('\n').map((line) => line.trim());
+  const getValue = (label) => {
+    const prefix = `- ${label}:`;
+    const hit = lines.find((line) => line.toLowerCase().startsWith(prefix.toLowerCase()));
+    if (!hit) return null;
+    return hit.slice(prefix.length).trim() || null;
+  };
+
+  return {
+    generatedAt: getValue('Generated at'),
+    lastSuccessfulCheck: getValue('Last successful check'),
+    nextRefreshTarget: getValue('Next refresh (target)')
+  };
+}
+
+function maybeIsoToDisplay(value) {
+  if (!value) return null;
+  const normalized = String(value).split(' ')[0].trim();
+  const ts = Date.parse(normalized);
+  if (Number.isNaN(ts)) return value;
+  return formatDateTime(ts);
+}
+
 function renderIncidentLines(text = '') {
   const incidentEl = document.getElementById('incident-lines');
   if (!incidentEl) return;
@@ -544,6 +568,7 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
 
     const normalized = text.toLowerCase();
     const failCount = (normalized.match(/fail/g) || []).length;
+    const monitorMeta = parseMonitorMetadata(text);
 
     if (failCount >= 2) {
       badgeEl.textContent = 'critical';
@@ -563,9 +588,24 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     const successTs = Date.now();
     setCachedMonitorReport({ text, fetchedAt });
     setMonitorLastSuccessTs(successTs);
-    renderMonitorLastSuccess(successEl, successTs);
+
+    const metaLastSuccessTs = monitorMeta.lastSuccessfulCheck ? Date.parse(monitorMeta.lastSuccessfulCheck) : Number.NaN;
+    if (Number.isFinite(metaLastSuccessTs)) {
+      renderMonitorLastSuccess(successEl, metaLastSuccessTs);
+    } else {
+      renderMonitorLastSuccess(successEl, successTs);
+    }
+
     updateMonitorFreshness(fetchedAt, freshnessEl);
-    checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+    const checkedFromMeta = maybeIsoToDisplay(monitorMeta.generatedAt);
+    checkedEl.textContent = `checked: ${checkedFromMeta || formatCheckedAt()}`;
+
+    const nextRefreshEl = document.getElementById('monitor-next-refresh');
+    const nextRefreshFromMeta = maybeIsoToDisplay(monitorMeta.nextRefreshTarget);
+    if (nextRefreshEl && nextRefreshFromMeta) {
+      nextRefreshEl.textContent = `next refresh: ${nextRefreshFromMeta}`;
+      nextRefreshEl.className = 'meta';
+    }
 
     if (window.monitorFreshnessTimer) clearInterval(window.monitorFreshnessTimer);
     window.monitorFreshnessTimer = setInterval(() => updateMonitorFreshness(fetchedAt, freshnessEl), 60_000);
@@ -584,8 +624,25 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       reportEl.textContent = cached.text;
       renderIncidentLines(cached.text);
       updateMonitorFreshness(cached.fetchedAt, freshnessEl);
-      checkedEl.textContent = `checked: ${formatCheckedAt()}`;
-      renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
+
+      const monitorMeta = parseMonitorMetadata(cached.text);
+      const checkedFromMeta = maybeIsoToDisplay(monitorMeta.generatedAt);
+      checkedEl.textContent = `checked: ${checkedFromMeta || formatCheckedAt()}`;
+
+      const metaLastSuccessTs = monitorMeta.lastSuccessfulCheck ? Date.parse(monitorMeta.lastSuccessfulCheck) : Number.NaN;
+      if (Number.isFinite(metaLastSuccessTs)) {
+        renderMonitorLastSuccess(successEl, metaLastSuccessTs);
+      } else {
+        renderMonitorLastSuccess(successEl, getMonitorLastSuccessTs());
+      }
+
+      const nextRefreshEl = document.getElementById('monitor-next-refresh');
+      const nextRefreshFromMeta = maybeIsoToDisplay(monitorMeta.nextRefreshTarget);
+      if (nextRefreshEl && nextRefreshFromMeta) {
+        nextRefreshEl.textContent = `next refresh: ${nextRefreshFromMeta}`;
+        nextRefreshEl.className = 'meta';
+      }
+
       statusEl.textContent = 'Monitor: loaded from local cache';
       badgeEl.textContent = 'cached';
       badgeEl.className = 'badge badge-neutral';

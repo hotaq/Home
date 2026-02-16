@@ -12,7 +12,7 @@ Canonical context: Issue #3
 ## B) Website Monitor
 - [x] Panel แสดง latest message + status badge
 - [x] แสดง source (`manual/auto/cache`) + staleness
-- [ ] เพิ่ม `last successful check` + `next refresh`
+- [x] เพิ่ม `last successful check` + `next refresh` — monitor report metadata (`Generated at`/`Last successful check`/`Next refresh`) + frontend parse/render
 - [ ] manual refresh พร้อม in-flight lock
 - [ ] fallback cache เมื่อ fetch fail
 
