@@ -15,6 +15,7 @@
     "check:phasea-dryrun2": "node scripts/phasea-dryrun-round2.mjs",
     "check:phasea-kpi": "node scripts/phasea-kpi-baseline.mjs",
     "check:phasea-exit": "node scripts/phasea-exit-check.mjs",
+    "check:phaseb-controlled": "node scripts/phaseb-controlled-rollout.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
     "check:report-th": "node scripts/jin-loop-validate-th-report.mjs",

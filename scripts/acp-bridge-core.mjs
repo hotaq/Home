@@ -5,6 +5,11 @@ const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_RATE_LIMIT_MAX_EVENTS = 20;
 const DEFAULT_DEDUPE_MAX_KEYS = 5_000;
 const DEFAULT_SENDER_MAX_TRACKED = 1_000;
+const DEFAULT_RETRY_BASE_DELAY_MS = 1_000;
+const DEFAULT_RETRY_MAX_DELAY_MS = 30_000;
+const DEFAULT_RETRY_MAX_ATTEMPTS = 3;
+const DEFAULT_RETRY_JITTER_RATIO = 0.15;
+const DEFAULT_RETRYABLE_ERRORS = ['upstream-timeout', 'network-unreachable', 'rate-limited'];
 const CANONICAL_CONTEXT_ID = '3';
 
 export function mapBridgeError(err) {
@@ -33,6 +38,47 @@ function isoNow(nowFn = Date.now) {
 function stablePayloadHash(payload) {
   const raw = JSON.stringify(payload ?? null);
   return crypto.createHash('sha256').update(raw).digest('hex').slice(0, 16);
+}
+
+function resolveRolloutFlag(flags, botId, senderId) {
+  if (!flags || typeof flags !== 'object') return true;
+
+  const pairKey = `${String(botId || '')}:${String(senderId || '')}`;
+  if (flags.pairs && Object.prototype.hasOwnProperty.call(flags.pairs, pairKey)) {
+    return Boolean(flags.pairs[pairKey]);
+  }
+
+  if (senderId && flags.senders && Object.prototype.hasOwnProperty.call(flags.senders, String(senderId))) {
+    return Boolean(flags.senders[String(senderId)]);
+  }
+
+  if (botId && flags.bots && Object.prototype.hasOwnProperty.call(flags.bots, String(botId))) {
+    return Boolean(flags.bots[String(botId)]);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(flags, 'defaultEnabled')) {
+    return Boolean(flags.defaultEnabled);
+  }
+
+  return true;
+}
+
+function computeBackoffDelayMs({
+  attempt,
+  baseDelayMs = DEFAULT_RETRY_BASE_DELAY_MS,
+  maxDelayMs = DEFAULT_RETRY_MAX_DELAY_MS,
+  jitterRatio = DEFAULT_RETRY_JITTER_RATIO,
+  random = Math.random
+}) {
+  const safeAttempt = Number(attempt) > 0 ? Number(attempt) : 1;
+  const expDelay = baseDelayMs * Math.pow(2, safeAttempt - 1);
+  const capped = Math.min(expDelay, maxDelayMs);
+  const ratio = Number(jitterRatio) >= 0 ? Number(jitterRatio) : DEFAULT_RETRY_JITTER_RATIO;
+  const jitterRange = Math.round(capped * ratio);
+  if (jitterRange <= 0) return capped;
+
+  const sampled = Math.floor((random() * (jitterRange * 2 + 1)) - jitterRange);
+  return Math.max(0, capped + sampled);
 }
 
 export function createEventEnvelope({
@@ -72,9 +118,12 @@ export function createBridgeHandlers({
   canonicalContextId = CANONICAL_CONTEXT_ID,
   senderPolicy = {},
   inboundRateLimit = {},
+  inboundRolloutFlags,
+  retryPolicy = {},
   dedupeMaxKeys = DEFAULT_DEDUPE_MAX_KEYS,
   senderMaxTracked = DEFAULT_SENDER_MAX_TRACKED,
-  now = Date.now
+  now = Date.now,
+  random = Math.random
 } = {}) {
   const seenByKey = new Map();
   const traceLog = [];
@@ -86,6 +135,24 @@ export function createBridgeHandlers({
   const rateLimitMaxEvents = Number(inboundRateLimit.maxEvents) > 0
     ? Number(inboundRateLimit.maxEvents)
     : DEFAULT_RATE_LIMIT_MAX_EVENTS;
+  const retryEnabled = Object.prototype.hasOwnProperty.call(retryPolicy, 'enabled')
+    ? Boolean(retryPolicy.enabled)
+    : false;
+  const retryMaxAttempts = Number(retryPolicy.maxAttempts) > 0
+    ? Number(retryPolicy.maxAttempts)
+    : DEFAULT_RETRY_MAX_ATTEMPTS;
+  const retryBaseDelayMs = Number(retryPolicy.baseDelayMs) > 0
+    ? Number(retryPolicy.baseDelayMs)
+    : DEFAULT_RETRY_BASE_DELAY_MS;
+  const retryMaxDelayMs = Number(retryPolicy.maxDelayMs) > 0
+    ? Number(retryPolicy.maxDelayMs)
+    : DEFAULT_RETRY_MAX_DELAY_MS;
+  const retryJitterRatio = Number(retryPolicy.jitterRatio) >= 0
+    ? Number(retryPolicy.jitterRatio)
+    : DEFAULT_RETRY_JITTER_RATIO;
+  const retryableErrors = Array.isArray(retryPolicy.retryableErrors) && retryPolicy.retryableErrors.length > 0
+    ? retryPolicy.retryableErrors.map((x) => String(x))
+    : DEFAULT_RETRYABLE_ERRORS;
   const dedupeMax = Number(dedupeMaxKeys) > 0 ? Number(dedupeMaxKeys) : DEFAULT_DEDUPE_MAX_KEYS;
   const senderTrackMax = Number(senderMaxTracked) > 0 ? Number(senderMaxTracked) : DEFAULT_SENDER_MAX_TRACKED;
 
@@ -128,6 +195,13 @@ export function createBridgeHandlers({
     }
 
     return { duplicate, elapsedMs: elapsed };
+  }
+
+  function checkRelayRolloutFlag({ senderId, botId }) {
+    const enabled = resolveRolloutFlag(inboundRolloutFlags, botId, senderId);
+    if (!enabled) {
+      throw new Error(`relay-rollout-disabled: sender=${senderId || 'n/a'} bot=${botId || 'n/a'}`);
+    }
   }
 
   function checkSenderAllowed({ senderId, botId }) {
@@ -183,6 +257,7 @@ export function createBridgeHandlers({
   }
 
   function guardInbound({ senderId, botId }) {
+    checkRelayRolloutFlag({ senderId, botId });
     checkSenderAllowed({ senderId, botId });
     const rate = checkSenderRateLimit(senderId);
     if (rate.limited) {
@@ -243,11 +318,66 @@ export function createBridgeHandlers({
     return { ok: !dedupe.duplicate, envelope, dedupe, rateLimit: rate };
   }
 
+  function planRetry({ contextId, source = 'auto', senderId, botId, attempt = 1, errorCode, payload, meta }) {
+    const mappedError = String(errorCode || 'unknown-error');
+
+    if (!retryEnabled) {
+      return { ok: false, reason: 'retry-disabled', attempt, errorCode: mappedError };
+    }
+
+    if (!retryableErrors.includes(mappedError)) {
+      return { ok: false, reason: 'non-retryable-error', attempt, errorCode: mappedError };
+    }
+
+    if (attempt > retryMaxAttempts) {
+      return { ok: false, reason: 'retry-attempt-limit', attempt, errorCode: mappedError, maxAttempts: retryMaxAttempts };
+    }
+
+    const rate = guardInbound({ senderId, botId });
+    const scheduledInMs = computeBackoffDelayMs({
+      attempt,
+      baseDelayMs: retryBaseDelayMs,
+      maxDelayMs: retryMaxDelayMs,
+      jitterRatio: retryJitterRatio,
+      random
+    });
+
+    const envelope = buildEnvelope({
+      contextId,
+      source,
+      status: 'retry',
+      payload: {
+        attempt,
+        scheduled_in_ms: scheduledInMs,
+        error_code: mappedError,
+        ...(payload || {})
+      },
+      meta: { ...meta, sender_id: senderId, bot_id: botId }
+    });
+
+    appendTrace({
+      direction: 'inbound',
+      status: 'retry-plan',
+      contextId: String(contextId),
+      source,
+      senderId,
+      botId,
+      ok: true,
+      attempt,
+      errorCode: mappedError,
+      scheduledInMs,
+      rateCount: rate.count ?? 0
+    });
+
+    return { ok: true, envelope, attempt, scheduledInMs, rateLimit: rate };
+  }
+
   return {
     send,
     ack,
     error,
     retry,
+    planRetry,
     _internal: {
       dedupeKey,
       seenByKey,
@@ -261,7 +391,13 @@ export function createBridgeHandlers({
         dedupeMax,
         senderTrackMax,
         rateLimitWindowMs,
-        rateLimitMaxEvents
+        rateLimitMaxEvents,
+        retryEnabled,
+        retryMaxAttempts,
+        retryBaseDelayMs,
+        retryMaxDelayMs,
+        retryJitterRatio,
+        retryableErrors
       })
     }
   };
