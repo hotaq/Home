@@ -34,6 +34,7 @@ python3 -m http.server 8080
 - เพิ่ม focus trap ที่ access gate พร้อมล็อกการโฟกัสไว้ใน dialog และ freeze background (`inert` + lock scroll) ลดโอกาสคีย์บอร์ดหลุดไปกดองค์ประกอบด้านหลัง
 - Hardening ฝั่ง frontend: เปลี่ยนจุด render หลักจาก `innerHTML` เป็น DOM API (`textContent`/`createElement`) เพื่อลดความเสี่ยง script injection จากข้อมูล issue/data
 - เพิ่ม network status (online/offline) บนหัวเว็บ พร้อม auto-refresh monitor เมื่อกลับมา online เพื่อให้เห็นสภาพเครือข่ายทันทีและลด false alarm ตอนเน็ตหลุด
+- เพิ่ม local cache สำหรับ `monitor-latest.md`: ถ้าโหลดรายงานสดไม่สำเร็จ (offline/network/http fail) จะ fallback ไปแสดงรายงานล่าสุดที่เคยโหลดได้ พร้อมระบุว่าเป็น cache และเหตุผลที่รอบล่าสุดล้มเหลว
 
 ## Governance guardrail (#3)
 - Dashboard จะตรวจว่ามี canonical governance thread `.../issues/3` อยู่ใน `data.json` หรือไม่

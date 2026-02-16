@@ -321,6 +321,60 @@ function updateNextRefreshUI({ hidden = document.hidden } = {}) {
   nextEl.className = 'meta';
 }
 
+const MONITOR_REPORT_CACHE_KEY = 'monitor-report-cache:v1';
+
+function getCachedMonitorReport() {
+  try {
+    const raw = localStorage.getItem(MONITOR_REPORT_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.text || !parsed?.fetchedAt) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedMonitorReport({ text, fetchedAt }) {
+  try {
+    localStorage.setItem(
+      MONITOR_REPORT_CACHE_KEY,
+      JSON.stringify({
+        text,
+        fetchedAt,
+        cachedAt: Date.now()
+      })
+    );
+  } catch {
+    // Ignore cache write failure.
+  }
+}
+
+function renderIncidentLines(text = '') {
+  const incidentEl = document.getElementById('incident-lines');
+  if (!incidentEl) return;
+
+  incidentEl.innerHTML = '';
+  const lines = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const incidentLines = lines.filter((l) => /fail|error|timeout/i.test(l));
+
+  if (incidentLines.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = 'No incident lines in latest report';
+    incidentEl.appendChild(li);
+    return;
+  }
+
+  incidentLines.slice(0, 8).forEach((line) => {
+    const li = document.createElement('li');
+    li.textContent = line;
+    incidentEl.appendChild(li);
+  });
+}
+
 function startMonitorAutoRefresh(intervalMs = 5 * 60_000) {
   if (window.monitorAutoRefreshTimer) clearInterval(window.monitorAutoRefreshTimer);
   if (window.monitorRefreshCountdownTimer) clearInterval(window.monitorRefreshCountdownTimer);
@@ -450,28 +504,11 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
       badgeEl.className = 'badge badge-open';
     }
 
-    const incidentEl = document.getElementById('incident-lines');
-    incidentEl.innerHTML = '';
-    const lines = text
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-    const incidentLines = lines.filter((l) => /fail|error|timeout/i.test(l));
-
-    if (incidentLines.length === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'No incident lines in latest report';
-      incidentEl.appendChild(li);
-    } else {
-      incidentLines.slice(0, 8).forEach((line) => {
-        const li = document.createElement('li');
-        li.textContent = line;
-        incidentEl.appendChild(li);
-      });
-    }
+    renderIncidentLines(text);
 
     const lastModifiedHeader = res.headers.get('last-modified');
     const fetchedAt = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : Date.now();
+    setCachedMonitorReport({ text, fetchedAt });
     updateMonitorFreshness(fetchedAt, freshnessEl);
     checkedEl.textContent = `checked: ${formatCheckedAt()}`;
 
@@ -484,15 +521,30 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชแล้ว' : '';
   } catch (err) {
     const reason = err instanceof Error && err.message ? err.message : 'unknown-error';
-    statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
-    badgeEl.textContent = 'unknown';
-    badgeEl.className = 'badge badge-neutral';
-    freshnessEl.textContent = 'staleness: unknown';
-    freshnessEl.className = 'meta';
-    sourceEl.textContent = `source: ${source} · fail (${reason})`;
-    sourceEl.className = 'meta meta-warn';
-    checkedEl.textContent = `checked: ${formatCheckedAt()}`;
-    refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
+    const cached = getCachedMonitorReport();
+
+    if (cached) {
+      reportEl.textContent = cached.text;
+      renderIncidentLines(cached.text);
+      updateMonitorFreshness(cached.fetchedAt, freshnessEl);
+      checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+      statusEl.textContent = 'Monitor: loaded from local cache';
+      badgeEl.textContent = 'cached';
+      badgeEl.className = 'badge badge-neutral';
+      sourceEl.textContent = `source: ${source} · cache (last fail: ${reason})`;
+      sourceEl.className = 'meta meta-warn';
+      refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ (ใช้ข้อมูลล่าสุดจาก cache)' : '';
+    } else {
+      statusEl.textContent = 'Monitor: no latest report found (run monitor workflow)';
+      badgeEl.textContent = 'unknown';
+      badgeEl.className = 'badge badge-neutral';
+      freshnessEl.textContent = 'staleness: unknown';
+      freshnessEl.className = 'meta';
+      sourceEl.textContent = `source: ${source} · fail (${reason})`;
+      sourceEl.className = 'meta meta-warn';
+      checkedEl.textContent = `checked: ${formatCheckedAt()}`;
+      refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
+    }
   } finally {
     state.inFlight = false;
     if (sectionEl) sectionEl.setAttribute('aria-busy', 'false');
