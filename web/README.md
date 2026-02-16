@@ -25,3 +25,7 @@ python3 -m http.server 8080
 - Agent roster แสดงเป็น badge สีตามสถานะ (active/paused/other) เพื่อสแกนเร็วขึ้น
 - บนจอเล็กจะเปลี่ยนเป็น single-column และเพิ่ม tap target ของ quick action ให้กดง่ายขึ้น
 - ส่วน Monitor มี staleness indicator (fresh/aging/stale) อัปเดตทุก 1 นาที เพื่อเห็นความสดของรายงานทันที
+
+## Governance guardrail (#3)
+- Dashboard จะตรวจว่ามี canonical governance thread `.../issues/3` อยู่ใน `data.json` หรือไม่
+- ถ้าหายไป จะแสดงสถานะเตือนชัดเจน และ quick action จะไม่ผูกลิงก์บอร์ดผิด issue index

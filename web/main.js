@@ -126,12 +126,17 @@ function copyText(text) {
   });
 }
 
+function findCanonicalGovernanceThread(threads = []) {
+  return threads.find((thread) => /\/issues\/3(?:$|[?#])/i.test(thread.url));
+}
+
 function renderQuickActions(data) {
   const container = document.getElementById('quick-actions');
   const statusEl = document.getElementById('quick-actions-status');
 
   const primaryThread = data.threads?.[0]?.url;
-  const boardThread = data.threads?.[1]?.url;
+  const governanceThread = findCanonicalGovernanceThread(data.threads || []);
+  const boardThread = governanceThread?.url;
 
   const actions = [
     { label: 'คัดลอก /ritual', copy: '/ritual <topic>\nContext:\nDecision:\nAction:' },
@@ -166,6 +171,11 @@ function renderQuickActions(data) {
     link.textContent = action.label;
     container.appendChild(link);
   });
+
+  if (!governanceThread && statusEl) {
+    statusEl.textContent = '⚠️ ไม่พบ canonical governance thread (#3) ใน data.json';
+    statusEl.classList.add('status-warn');
+  }
 }
 
 function formatUpdatedAt(iso) {
@@ -210,7 +220,19 @@ function statusClassFromText(status = '') {
 async function loadThreads(data) {
   const threads = document.getElementById('threads');
   const statusEl = document.getElementById('threads-status');
+  const governanceStatusEl = document.getElementById('governance-status');
   const openBadge = document.getElementById('open-threads-badge');
+
+  const governanceThread = findCanonicalGovernanceThread(data.threads || []);
+  if (governanceStatusEl) {
+    if (governanceThread) {
+      governanceStatusEl.textContent = `Governance thread check: OK (#3 ${governanceThread.name || ''})`;
+      governanceStatusEl.classList.remove('status-warn');
+    } else {
+      governanceStatusEl.textContent = 'Governance thread check: MISSING (#3)';
+      governanceStatusEl.classList.add('status-warn');
+    }
+  }
 
   const results = await Promise.all(data.threads.map((thread) => fetchIssueMeta(thread)));
 

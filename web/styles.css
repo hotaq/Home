@@ -55,6 +55,7 @@ li{margin:7px 0}
 .meta-critical{color:#ffaaaa}
 .meta-link{margin-left:8px;color:var(--muted);font-size:.86em}
 .status{margin:0 0 8px;color:var(--muted);font-size:.9em}
+.status-warn{color:#ffd98a;font-weight:600}
 .badge{
   display:inline-block;
   padding:3px 8px;
