@@ -370,6 +370,31 @@ function getMonitorLoadState() {
   return window.monitorLoadState;
 }
 
+function setupNetworkStatus() {
+  const el = document.getElementById('network-status');
+  if (!el) return;
+
+  const render = () => {
+    if (navigator.onLine) {
+      el.textContent = 'Network: online';
+      el.className = 'status status-ok';
+      return;
+    }
+
+    el.textContent = 'Network: offline (using cached/last-known data)';
+    el.className = 'status status-warn';
+  };
+
+  window.addEventListener('online', async () => {
+    render();
+    await loadMonitorReport({ source: 'auto-reconnect' });
+    window.monitorAutoRefreshAt = Date.now() + 5 * 60_000;
+    updateNextRefreshUI();
+  });
+  window.addEventListener('offline', render);
+  render();
+}
+
 async function loadMonitorReport({ source = 'auto' } = {}) {
   const sectionEl = document.getElementById('monitor-section');
   const statusEl = document.getElementById('monitor-status');
@@ -402,6 +427,8 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
   try {
+    if (!navigator.onLine) throw new Error('offline');
+
     const res = await fetch(`./monitor-latest.md?v=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`monitor-http-${res.status}`);
     const text = await res.text();
@@ -581,6 +608,8 @@ async function load() {
 
     const ok = await setupAccessGate(data);
     if (!ok) return;
+
+    setupNetworkStatus();
 
     const decisionEl = document.getElementById('decision');
     if (decisionEl) {
