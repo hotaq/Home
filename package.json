@@ -10,6 +10,7 @@
     "monitor:web": "node scripts/web-monitor.mjs",
     "check:acp-bridge": "node scripts/acp-bridge-smoke.mjs",
     "check:manifest": "node scripts/check-manifest.mjs",
+    "check:phasea-smoke": "node scripts/phasea-smoke-checks.mjs",
     "preflight:loop": "node scripts/jin-loop-preflight.mjs --json",
     "check:push-proof": "node scripts/jin-loop-push-proof.mjs --json",
     "check:report-th": "node scripts/jin-loop-validate-th-report.mjs",
