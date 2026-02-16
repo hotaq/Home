@@ -32,12 +32,23 @@ function escapeRegExp(text) {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const CANONICAL_CONTEXT_ID = "issue-3";
+
 function withAuditFooter({ body, actorId, routerDecision, dedupeKey }) {
   const runId = process.env.GITHUB_RUN_ID || "local";
-  const source = process.env.GITHUB_ACTOR || "unknown";
-  const ts = new Date().toISOString();
+  const actor = process.env.GITHUB_ACTOR || "unknown";
+  const updatedAt = new Date().toISOString();
+  const issueNumber = Number(process.env.ISSUE_NUMBER || 0);
+  const contextId = issueNumber ? `issue-${issueNumber}` : "issue-unknown";
+  const eventId = `${runId}:${actorId}:${Date.now()}`;
 
-  let footer = `---\nactor: ${actorId}\nsource: ${source}\nrun-id: ${runId}\nts: ${ts}`;
+  let footer = `---\nactor: ${actorId}\nsource: ${actor}\nrun-id: ${runId}\nts: ${updatedAt}`;
+  footer += `\nevent_id: ${eventId}`;
+  footer += `\ncontext_id: ${contextId}`;
+  footer += `\nstatus: send`;
+  footer += `\nsource_type: auto`;
+  footer += `\nupdated_at: ${updatedAt}`;
+
   if (routerDecision) {
     footer += `\nrouter: ${routerDecision}`;
   }
@@ -400,6 +411,14 @@ async function main() {
 
   if (!issueNumber || !commentBody) {
     console.log("No issue context payload. Exiting.");
+    return;
+  }
+
+  const expectedIssueNumber = Number(CANONICAL_CONTEXT_ID.replace("issue-", ""));
+  if (issueNumber !== expectedIssueNumber) {
+    console.log(
+      `Canonical context lock active: expected #${expectedIssueNumber}, got #${issueNumber}. Exiting.`
+    );
     return;
   }
 
