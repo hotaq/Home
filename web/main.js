@@ -371,12 +371,14 @@ function getMonitorLoadState() {
 }
 
 async function loadMonitorReport({ source = 'auto' } = {}) {
+  const sectionEl = document.getElementById('monitor-section');
   const statusEl = document.getElementById('monitor-status');
   const reportEl = document.getElementById('monitor-report');
   const badgeEl = document.getElementById('monitor-badge');
   const freshnessEl = document.getElementById('monitor-freshness');
   const checkedEl = document.getElementById('monitor-last-check');
   const refreshStatusEl = document.getElementById('monitor-refresh-status');
+  const refreshBtn = document.getElementById('monitor-refresh-btn');
 
   if (!statusEl || !reportEl || !badgeEl || !freshnessEl || !checkedEl || !refreshStatusEl) return;
 
@@ -390,6 +392,9 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
   }
 
   state.inFlight = true;
+  if (sectionEl) sectionEl.setAttribute('aria-busy', 'true');
+  if (refreshBtn) refreshBtn.disabled = true;
+
   const requestSeq = ++state.requestSeq;
   refreshStatusEl.textContent = source === 'manual' ? 'กำลังรีเฟรชรายงาน…' : '';
 
@@ -455,6 +460,9 @@ async function loadMonitorReport({ source = 'auto' } = {}) {
     refreshStatusEl.textContent = source === 'manual' ? 'รีเฟรชไม่สำเร็จ' : '';
   } finally {
     state.inFlight = false;
+    if (sectionEl) sectionEl.setAttribute('aria-busy', 'false');
+    if (refreshBtn) refreshBtn.disabled = false;
+
     if (state.queuedManual) {
       state.queuedManual = false;
       loadMonitorReport({ source: 'manual' });

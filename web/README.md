@@ -28,6 +28,7 @@ python3 -m http.server 8080
 - เพิ่มปุ่ม `Refresh monitor now`, แสดงเวลา `checked: HH:MM:SS`, และ auto-refresh ทุก 5 นาที เพื่อช่วยตรวจความน่าเชื่อถือได้เร็วขึ้น
 - เพิ่มตัวนับถอยหลัง `next refresh` และ pause auto-refresh เมื่อแท็บถูกซ่อน เพื่อลด request ที่ไม่จำเป็นและเห็นจังหวะตรวจครั้งถัดไปชัดขึ้น
 - Hardening monitor refresh: กันรีเฟรชซ้อน (in-flight lock) และถ้ากด Manual ระหว่าง auto-refresh จะ queue ให้รันต่อทันทีหลังจบ เพื่อไม่ให้ผลรายงาน race กัน
+- ปรับปุ่ม Refresh ให้ disable อัตโนมัติระหว่างโหลด พร้อม `aria-busy` ที่ section monitor เพื่อให้ทั้งผู้ใช้และ screen reader รู้สถานะกำลังทำงาน
 - เพิ่ม accessibility ที่ด่านเข้าใช้งาน: มี skip link, label ชัดเจน, auto-focus ช่องกรอกรหัส, และข้อความ error แบบ aria-live
 - Hardening ฝั่ง frontend: เปลี่ยนจุด render หลักจาก `innerHTML` เป็น DOM API (`textContent`/`createElement`) เพื่อลดความเสี่ยง script injection จากข้อมูล issue/data
 

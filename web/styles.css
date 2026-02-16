@@ -106,6 +106,8 @@ li{margin:7px 0}
 }
 .quick-btn:hover{border-color:#4d6ea8;background:#132447;transform:translateY(-1px)}
 .quick-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.quick-btn[disabled]{opacity:.58;cursor:not-allowed;transform:none}
+.quick-btn[disabled]:hover{border-color:#30466f;background:#0f1a31}
 
 .monitor-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 10px}
 .monitor-actions .status{margin:0}
